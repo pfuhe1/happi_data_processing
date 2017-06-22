@@ -35,7 +35,7 @@ def get_runs(model,experiment,basepath):
 	elif model=='NorESM1-HAPPI' and experiment=='All-Hist':
 		# choose specific runs
 		runs = norESM_histruns(basepath)
-	elif model=='MIROC5' or model=='NorESM1-HAPPI': 
+	elif model=='MIROC5' or model=='NorESM1-HAPPI' or model=='HadAM3P' or model=='CAM5-1-2-025degree': 
 		# For other scenarios choose all runs
 		run_pattern = 'run*'
 	elif model=='CAM4-2degree':
@@ -44,6 +44,7 @@ def get_runs(model,experiment,basepath):
 		run_pattern = 'r*i1p1'
 	if run_pattern:
 		pathpattern=basepath+model+'/'+experiment+ '/*/*/mon/atmos/'+ var+'/'+run_pattern
+		print pathpattern
 		runs = glob.glob(pathpattern)
 	return runs
 
@@ -69,15 +70,15 @@ def process_run(runpath,run_whole):
 
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,basepath,numthreads):
-	temp_dir = tempfile.mkdtemp(dir='/export/silurian/array-01/pu17449/')
+	temp_dir = tempfile.mkdtemp(dir=basepath+'/../')
 	try:		
 		print model,experiment,var
 		outmean = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.'+var+'.'+experiment+'_monclim_ensmean.nc'
 		outstd = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.'+var+'.'+experiment+'_monclim_ensstd.nc'
 		if os.path.exists(outmean) and os.path.exists(outstd):
 			print 'files already exist, skipping'
-			return
 
+			return
 		# Create pool of processes to process runs in parallel. 
 		pool = multiprocessing.Pool(processes=numthreads)
 
@@ -114,11 +115,16 @@ def process_data(model,experiment,var,basepath,numthreads):
 
 if __name__=='__main__':
 
-	basepath = '/export/silurian/array-01/pu17449/happi_data/'
-	models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
+	#basepath = '/export/silurian/array-01/pu17449/happi_data/'
+	basepath='/export/triassic/array-01/pu17449/happi_data2/'
+	#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
+	#models = ['HadAM3P']
+	models = ['CAM5-1-2-025degree']
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	varlist = ['pr','tas','tasmin','tasmax','rsds']
-	numthreads = 10
+	#experiments = ['Plus20-Future']
+	#varlist = ['pr','tasmin','tasmax','rsds']
+	varlist = ['rsds']
+	numthreads = 5
 
 	for model in models:
 		for experiment in experiments:

@@ -1,6 +1,8 @@
 # Script to do monthly means then ensemble average of HAPPI data
 import os,glob,tempfile,shutil
 from threading import Thread
+import multiprocessing
+from get_runs import get_runs
 
 
 # Create list into a string (also adding monmean operator)
@@ -11,65 +13,14 @@ def list_to_string_monmean(l):
 #		s += item +' '
 	return s
 
-# Create list into a string (also adding raindays operator)
-def list_to_string_raindays(l):
-	s = ''
-	for item in l:
-		s += '-expr,"raindays=pr>0.000011574" '+ item +' '
-	return s[:-1] # Get rid of final space
-# Create list into a string 
-def list_to_string(l):
-	s = ''
-	for item in l:
-		s += item +' '
-	return s
-
-# Choose runs 1-50 and 111-160 for MIROC Hist
-def miroc_histruns(basepath,model,experiment,var):
-	runs = []
-	for run in range(1,51):
-		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/day/atmos/'+ var+'/run'+str(run).zfill(3))
-	for run in range(111,161):
-		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/day/atmos/'+ var+'/run'+str(run).zfill(3))
-	return runs
-
-# Choose runs 1-125 for NorESM1-HAPPI Hist
-def norESM_histruns(basepath,model,experiment,var):
-	runs = []
-	for run in range(1,126):
-		runs.append(basepath+model+'/'+experiment+ '/est1/v1-0/day/atmos/'+ var+'/run'+str(run).zfill(3))
-	return runs
-
-# Get list of runs for a particular model, experiment, variable
-def get_runs(model,experiment,var,basepath):
-	run_pattern = None
-	if model=='MIROC5' and experiment=='All-Hist':
-		# choose specific runs
-		runs = miroc_histruns(basepath,model,experiment,var)
-	elif model=='NorESM1-HAPPI' and experiment=='All-Hist':
-		# choose specific runs
-		runs = norESM_histruns(basepath,model,experiment,var)
-	elif model=='MIROC5' or model=='NorESM1-HAPPI': 
-		# For other scenarios choose all runs
-		run_pattern = 'run*'
-	elif model=='CAM4-2degree':
-		# For CAM4-2degree choose first 500 or so (runs from 1000 are longer for bias correction)
-		run_pattern = 'ens0*'
-	elif model=='CanAM4':
-		run_pattern = 'r*i1p1'
-	if run_pattern:
-		pathpattern=basepath+model+'/'+experiment+ '/*/*/day/atmos/'+ var+'/'+run_pattern
-		runs = glob.glob(pathpattern)
-	return runs
 
 # Process data for a single ensemble member/ run
-def process_run(runpath,model,experiment,var,temp_dir):
+def process_run(runpath,run_whole):
 	run = os.path.basename(runpath)
 	print run
 	# input files
 	run_files=glob.glob(runpath+'/*.nc')
-	# output file
-	run_whole = os.path.join(temp_dir,model+'_'+experiment+'_raindays_'+run+'.nc')
+
 	if len(run_files)==0:
 		raise Exception('error, no files found: '+runpath)
 	elif len(run_files)==1:
@@ -81,7 +32,7 @@ def process_run(runpath,model,experiment,var,temp_dir):
 	else: 
 		# calculate raindays and concatenate files (have to do in two parts)
 		# CDO command
-		run_cat = os.path.join(temp_dir,model+'_'+experiment+'_raindays_'+run+'_cat.nc')
+		run_cat = run_whole[:-3]+'_cat.nc'
 		cdo_cmd = "cdo cat " + list_to_string_raindays(run_files) +" "+ run_cat
 		print cdo_cmd
 		os.system(cdo_cmd)
@@ -91,7 +42,8 @@ def process_run(runpath,model,experiment,var,temp_dir):
 
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,basepath,numthreads):
-	temp_dir = tempfile.mkdtemp(dir='/export/silurian/array-01/pu17449/')
+	temp_dir = tempfile.mkdtemp(dir=basepath+'/../')
+	data_freq = 'day'
 	try:		
 		print model,experiment,var
 		outmean = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.raindays.'+experiment+'_monclim_ensmean.nc'
@@ -105,9 +57,11 @@ def process_data(model,experiment,var,basepath,numthreads):
 
 		# Loop over runs
 		run_averages = ''
-		runs = get_runs(model,experiment,var,basepath)
+		runs = get_runs(model,experiment,basepath,data_freq,var)
 		for runpath in runs:
-			pool.apply_async(process_run,(runpath,model,experiment,temp_dir))
+			run = os.path.basename(runpath)
+			run_whole = os.path.join(temp_dir,model+'_'+experiment+'_'+var+'_'+run+'.nc')
+			pool.apply_async(process_run,(runpath,run_whole))
 			# Add this run to list
 			run_averages += run_whole +' '
 
@@ -134,10 +88,13 @@ def process_data(model,experiment,var,basepath,numthreads):
 if __name__=='__main__':
 
 	basepath = '/export/silurian/array-01/pu17449/happi_data/'
-	models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
+	#basepath='/export/triassic/array-01/pu17449/happi_data2/'
+	#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
+	#models = ['CAM5-1-2-025degree']
+	models = ['CAM4-2degree']
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 	var = 'pr' # Get raindays from precip > 1mm
-	numthreads = 6
+	numthreads = 12
 
 	for model in models:
 		for experiment in experiments:
