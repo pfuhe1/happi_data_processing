@@ -42,13 +42,13 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 	run_averages_op = ['']*len(operators)
 	try:		
 		print model,experiment,var
-		clim_ensmean = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.'+var+'.'+experiment+'_monclim_ensmean.nc'
-		clim_ensstd = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.'+var+'.'+experiment+'_monclim_ensstd.nc'
+		clim_ensmean = outdir+model+'.'+var+'.'+experiment+'_monclim_ensmean.nc'
+		clim_ensstd = outdir+model+'.'+var+'.'+experiment+'_monclim_ensstd.nc'
 		if data_freq=='day':
 			for i,op in enumerate(operators):
 				opname = op.replace(',','')
-				op_ensmean[i] = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensmean.nc'
-				op_ensstd[i] = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensstd.nc'
+				op_ensmean[i] = outdir+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensmean.nc'
+				op_ensstd[i] = outdir+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensstd.nc'
 
 	#	if os.path.exists(clim_ensmean) and os.path.exists(clim_ensstd):
 	#		print 'files already exist, skipping'
@@ -136,23 +136,25 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 
 if __name__=='__main__':
 
+	outdir = '/export/silurian/array-01/pu17449/processed_data_20170627/'
+
 	host=socket.gethostname()
+	# CAM5 data is stored and should be processed on triassic
 	if host=='triassic.ggy.bris.ac.uk':
-		basepath='/export/triassic/array-01/pu17449/happi_data2/'
+		basepath='/export/triassic/array-01/pu17449/happi_data_decade/'
 		models = ['CAM5-1-2-025degree']
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 5
+	# All other data is stored on silurian
 	elif host =='silurian.ggy.bris.ac.uk':
 		basepath = '/export/silurian/array-01/pu17449/happi_data/'
-		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
-		models = ['CAM4-2degree']
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
 		# Number of processes to run in parallel to process ensemble members
-		numthreads = 12
+		numthreads = 16
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 	varlist = ['pr','tasmin','tasmax','rsds','tas']
 	data_freq = {'pr':'day','tasmin':'day','tasmax':'day','tas':'mon','rsds':'mon'}
-
 
 
 	for model in models:

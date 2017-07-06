@@ -1,5 +1,5 @@
 # Functions  to get lists of HAPPI runs
-import glob
+import glob,os
 
 # Choose runs 1-50 and 111-160 for MIROC Hist
 def miroc_histruns(basepath,model,experiment,var,data_freq):
@@ -17,15 +17,22 @@ def norESM_histruns(basepath,model,experiment,var,data_freq):
 		runs.append(basepath+model+'/'+experiment+ '/est1/v1-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
 	return runs
 
+def CESM_runs(experiment,data_freq,var):
+	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data/'
+	runpath = os.path.join(basepath,experiment,data_freq,var,'run*')
+	return glob.glob(runpath)
+
 # Get list of runs for a particular model, experiment, variable
 def get_runs(model,experiment,basepath,data_freq,var):
 	run_pattern = None
+	if model =='CESM' or model == 'CESM-CAM5':
+		return CESM_runs(experiment,data_freq,var)
 	if model=='MIROC5' and experiment=='All-Hist':
 		# choose specific runs
-		runs = miroc_histruns(basepath,model,experiment,var,data_freq)
+		return miroc_histruns(basepath,model,experiment,var,data_freq)
 	elif model=='NorESM1-HAPPI' and experiment=='All-Hist':
 		# choose specific runs
-		runs = norESM_histruns(basepath,model,experiment,var,data_freq)
+		return norESM_histruns(basepath,model,experiment,var,data_freq)
 	elif model=='CAM4-2degree':
 		run_pattern = 'ens0*'
 	elif model=='CanAM4':

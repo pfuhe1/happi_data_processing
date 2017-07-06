@@ -10,6 +10,10 @@ from netCDF4 import Dataset,MFDataset
 sys.path.append('/home/bridge/pu17449/src/happi_analysis/river_basins')
 from create_mask import create_mask,load_polygons
 
+# Stuff to load runs
+sys.path.append('/home/bridge/pu17449/src/happi_data_processing')
+from get_runs import get_runs
+
 
 # Create list into a string 
 def list_to_string(l):
@@ -18,56 +22,14 @@ def list_to_string(l):
 		s += item +' '
 	return s
 
-# Choose runs 1-50 and 111-160 for MIROC Hist
-def miroc_histruns(basepath,model,experiment,var,data_freq):
-	runs = []
-	for run in range(1,51):
-		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
-	for run in range(111,161):
-		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
-	return runs
-
-# Choose runs 1-125 for NorESM1-HAPPI Hist
-def norESM_histruns(basepath,model,experiment,var,data_freq):
-	runs = []
-	for run in range(1,126):
-		runs.append(basepath+model+'/'+experiment+ '/est1/v1-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
-	return runs
-
-# Choose runs from v1-0 (not v1-0-aero) for CAM5-1-2-025 Hist
-def CAM5_histruns(basepath,model,experiment,var,data_freq):
-	runs =glob.glob(basepath+model+'/'+experiment+ '/est1/v1-0/'+data_freq+'/atmos/'+ var+'/run*')
-	return runs
-
-# Get list of runs for a particular model, experiment, variable
-def get_runs(model,experiment,basepath,data_freq,var):
-	run_pattern = None
-	if model=='MIROC5' and experiment=='All-Hist':
-		# choose specific runs
-		runs = miroc_histruns(basepath,model,experiment,var,data_freq)
-	elif model=='NorESM1-HAPPI' and experiment=='All-Hist':
-		# choose specific runs
-		runs = norESM_histruns(basepath,model,experiment,var,data_freq)
-	elif model == 'CAM5-1-2-025degree' and experiment == 'All-Hist':
-		runs = CAM5_histruns(basepath,model,experiment,var,data_freq)
-	elif model=='MIROC5' or model=='NorESM1-HAPPI' or model=='HadAM3P' or model=='CAM5-1-2-025degree': 
-		# For other scenarios choose all runs
-		run_pattern = 'run*'
-	elif model=='CAM4-2degree':
-		run_pattern = 'ens0*'
-	elif model=='CanAM4':
-		run_pattern = 'r*i1p1'
-	if run_pattern:
-		pathpattern=basepath+model+'/'+experiment+ '/*/*/'+data_freq+'/atmos/'+ var+'/'+run_pattern
-		print pathpattern
-		runs = glob.glob(pathpattern)
-	return runs
-
 def load_basin_data(runpath,var,basin_masks):
-	#print runpath
+	print runpath
 	basin_timeseries = {}
 	# Hack to only take input files from 2000's
-	run_files=glob.glob(runpath+'/*_2*-*.nc')
+	if runpath.find('CESM')==-1:
+		run_files=glob.glob(runpath+'/*_2*-*.nc')
+	else:
+		run_files=glob.glob(runpath+'/*.nc')
 
 	# Load data from file into data_all array
 	with MFDataset(run_files,'r') as f_in:
@@ -124,22 +86,22 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		result_all = ['']*len(runs)
 
 		# Loop over runs
+		print 'loading data...'
 		for i,runpath in enumerate(runs):
 			run = os.path.basename(runpath)
-			
 			# Add the process to the pool
-			#result_all[i]  = pool.apply_async(load_basin_data,(runpath,var,masks))
-			result_all[i] = load_basin_data(runpath,var,masks)
+			result_all[i]  = pool.apply_async(load_basin_data,(runpath,var,masks))
+			#result_all[i] = load_basin_data(runpath,var,masks)
 
 		# close the pool and make sure the processing has finished
 		pool.close()
 		pool.join()
 
-		print 'collecting data...'
+		print '\ncollecting data...'
 		data_all = {}
-#		for result in result_all:
-		for tmp in result_all:
-#			tmp = result.get(timeout=600.)
+		for result in result_all:
+#		for tmp in result_all:
+			tmp = result.get(timeout=600.)
 			# Put data from each basin into different list
 			for basin,data in tmp.iteritems():
 				if data_all.has_key(basin):
@@ -150,9 +112,9 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		# convert lists to arrays
 		print 'finalising data'
 		for basin in masks.keys():
-			print len(data_all[basin]),len(data_all[basin][0])
 			data_all[basin] = np.array(data_all[basin])
-			print data_all[basin].shape
+		print len(data_all[basin]),len(data_all[basin][0])#,len(data_all[basin][1]),len(data_all[basin][2]),len(data_all[basin][3]),len(data_all[basin][4]),len(data_all[basin][5]),
+		print data_all[basin].shape
 		return data_all
 
 	except Exception,e:

@@ -1,5 +1,5 @@
 # Script to do monthly means then ensemble average of HAPPI data
-import os,glob,tempfile,shutil
+import os,glob,tempfile,shutil,socket
 from threading import Thread
 import multiprocessing
 from get_runs import get_runs
@@ -12,6 +12,12 @@ def list_to_string_monmean(l):
 		s += '-monmean '+ item +' '
 #		s += item +' '
 	return s
+
+def list_to_string_raindays(l):
+	s = ''
+	for item in l:
+		s += '-expr,"raindays=pr>0.000011574" '+ item +' '
+	return s[:-1] # Get rid of final space
 
 
 # Process data for a single ensemble member/ run
@@ -46,8 +52,8 @@ def process_data(model,experiment,var,basepath,numthreads):
 	data_freq = 'day'
 	try:		
 		print model,experiment,var
-		outmean = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.raindays.'+experiment+'_monclim_ensmean.nc'
-		outstd = '/export/silurian/array-01/pu17449/processed_data_clim/'+model+'.raindays.'+experiment+'_monclim_ensstd.nc'
+		outmean = outdir+model+'.raindays.'+experiment+'_monclim_ensmean.nc'
+		outstd = outdir+model+'.raindays.'+experiment+'_monclim_ensstd.nc'
 		if os.path.exists(outmean) and os.path.exists(outstd):
 			print 'files already exist, skipping'
 			return
@@ -87,14 +93,23 @@ def process_data(model,experiment,var,basepath,numthreads):
 
 if __name__=='__main__':
 
-	basepath = '/export/silurian/array-01/pu17449/happi_data/'
-	#basepath='/export/triassic/array-01/pu17449/happi_data2/'
-	#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
-	#models = ['CAM5-1-2-025degree']
-	models = ['CAM4-2degree']
+	host=socket.gethostname()
+	# CAM5 data is stored and should be processed on triassic
+	if host=='triassic.ggy.bris.ac.uk':
+		basepath='/export/triassic/array-01/pu17449/happi_data_decade/'
+		models = ['CAM5-1-2-025degree']
+		# Number of processes to run in parallel to process ensemble members
+		numthreads = 5
+	# All other data is stored on silurian
+	elif host =='silurian.ggy.bris.ac.uk':
+		basepath = '/export/silurian/array-01/pu17449/happi_data/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
+		# Number of processes to run in parallel to process ensemble members
+		numthreads = 16
+
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	var = 'pr' # Get raindays from precip > 1mm
-	numthreads = 12
+	var = 'pr' # Get raindays (number of days where precip > 1mm)
+	outdir = '/export/silurian/array-01/pu17449/processed_data_20170627/'
 
 	for model in models:
 		for experiment in experiments:
