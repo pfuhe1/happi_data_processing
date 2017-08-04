@@ -18,7 +18,8 @@ def process_run_add(experiment,runpath1,runpath2,var,var_rename,run_whole):
 	if experiment=='historical':
 		#seldate = '-seldate,1995-01-01,2005-12-31 '
 		# Hack to shift date to centre of month rather than the start of the following month
-		seldate = '-seldate,1995-01-01,2005-12-31 -shifttime,-15 '
+#		seldate = '-seldate,1995-01-01,2005-12-31 -shifttime,-15 '
+		seldate = '-seldate,2006-01-01,2015-12-31 -shifttime,-15 '
 	else:
 		#seldate = '-seldate,2091-01-01,2100-12-31 
 		# Hack to shift date to centre of month rather than the start of the following month
@@ -47,7 +48,8 @@ def process_run(experiment,runpath1,var,var_rename,run_whole):
 	if experiment=='historical':
 		#seldate = '-seldate,1995-01-01,2005-12-31 '
 		# Hack to shift date to centre of month rather than the start of the following month
-		seldate = '-seldate,1995-01-01,2005-12-31 -shifttime,-15 '
+#		seldate = '-seldate,1995-01-01,2005-12-31 -shifttime,-15 '
+		seldate = '-seldate,2006-01-01,2015-12-31 -shifttime,-15 '
 	else:
 		#seldate = '-seldate,2091-01-01,2100-12-31 
 		# Hack to shift date to centre of month rather than the start of the following month
@@ -80,11 +82,15 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 		# Loop over runs
 		run_averages = ''
 		runstring = basepath+experiment+'/mon/'+var+'/*.'+var+'.*.nc'
+		# Go forward to 2006-2015 instead of earlier historical period
+		# (use 2 degree scenario)
+		if experiment == 'historical':
+			runstring = runstring.replace('historical','2pt0degC')
 		print runstring
 		runs = glob.glob(runstring)
 		print runs
 
-		outpath_runs=os.path.join(basepath,'decade_data',experiment)
+		outpath_runs=os.path.join(basepath,'decade_data_v2',experiment)
 		if not os.path.exists(outpath_runs):
 			os.mkdir(outpath_runs)		
 	
@@ -118,7 +124,7 @@ if __name__=='__main__':
 	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/'
 	experiments = ['historical','1pt5degC','2pt0degC','1pt5degC_OS']
 	varlist = ['PRECL','TREFHT']
-	numthreads = 11
+	numthreads = 2
 	data_freq = 'mon'
 
 	for experiment in experiments:

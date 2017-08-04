@@ -18,6 +18,7 @@ def norESM_histruns(basepath,model,experiment,var,data_freq):
 	return runs
 
 def CESM_runs(experiment,data_freq,var):
+	print 'getting runs for CESM'
 	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data/'
 	runpath = os.path.join(basepath,experiment,data_freq,var,'run*')
 	return glob.glob(runpath)
