@@ -42,18 +42,22 @@ def process_run_add(experiment,runpath1,runpath2,var,var_rename,run_whole):
 	os.remove(run_whole[:-3]+'_tmp.nc')
 
 # Process data for a single ensemble member/ run
-def process_run(experiment,runpath1,var,var_rename,run_whole):
+def process_run(experiment,runpath1,var,var_rename,run_whole,data_freq):
 	run = os.path.basename(runpath1)
+	if data_freq == 'mon':
+		shift = '-shifttime,-15 '
+	else:
+		shift = ''
 	print run
 	if experiment=='historical':
 		#seldate = '-seldate,1995-01-01,2005-12-31 '
 		# Hack to shift date to centre of month rather than the start of the following month
 #		seldate = '-seldate,1995-01-01,2005-12-31 -shifttime,-15 '
-		seldate = '-seldate,2006-01-01,2015-12-31 -shifttime,-15 '
+		seldate = '-seldate,2006-01-01,2015-12-31 '+shift
 	else:
 		#seldate = '-seldate,2091-01-01,2100-12-31 
 		# Hack to shift date to centre of month rather than the start of the following month
-		seldate = '-seldate,2091-01-01,2100-12-31 -shifttime,-15 '
+		seldate = '-seldate,2091-01-01,2100-12-31 '+shift
 
 	# CDO command
 	cdo_cmd = 'cdo '+seldate + runpath1 + ' ' + run_whole[:-3]+'_tmp.nc'
@@ -72,7 +76,7 @@ def process_run(experiment,runpath1,var,var_rename,run_whole):
 
 # Process all the data for the particular model, experiment and variable
 def process_data(experiment,var,basepath,numthreads,data_freq):
-	var_rename={'TREFHT':'tas','PRECL':'pr'}
+	var_rename={'TREFHT':'tas','PRECL':'pr','PRECT':'pr'}
 	try:		
 		print experiment,var
 
@@ -81,7 +85,7 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 
 		# Loop over runs
 		run_averages = ''
-		runstring = basepath+experiment+'/mon/'+var+'/*.'+var+'.*.nc'
+		runstring = basepath+experiment+'/'+data_freq+'/'+var+'/*.'+var+'.*.nc'
 		# Go forward to 2006-2015 instead of earlier historical period
 		# (use 2 degree scenario)
 		if experiment == 'historical':
@@ -106,7 +110,7 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 					runpath2 = runpath.replace('PRECL','PRECC')
 					pool.apply_async(process_run_add,(experiment,runpath,runpath2,var,var_rename,run_whole))
 				else:
-					pool.apply_async(process_run,(experiment,runpath,var,var_rename,run_whole))
+					pool.apply_async(process_run,(experiment,runpath,var,var_rename,run_whole,data_freq))
 
 		# close the pool and make sure the processing has finished
 		pool.close()
@@ -123,9 +127,14 @@ if __name__=='__main__':
 
 	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/'
 	experiments = ['historical','1pt5degC','2pt0degC','1pt5degC_OS']
-	varlist = ['PRECL','TREFHT']
+
+#	data_freq = 'mon'
+#	varlist = ['PRECL','TREFHT']
+
+	data_freq = 'day'
+	varlist = ['PRECT']
+
 	numthreads = 2
-	data_freq = 'mon'
 
 	for experiment in experiments:
 		for var in varlist:
