@@ -76,7 +76,7 @@ def process_run(experiment,runpath1,var,var_rename,run_whole,data_freq):
 
 # Process all the data for the particular model, experiment and variable
 def process_data(experiment,var,basepath,numthreads,data_freq):
-	var_rename={'TREFHT':'tas','PRECL':'pr','PRECT':'pr'}
+	var_rename={'TREFHT':'tas','PRECL':'pr','PRECT':'pr','QRUNOFF':'mrro'}
 	try:		
 		print experiment,var
 
@@ -99,7 +99,13 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 			os.mkdir(outpath_runs)		
 	
 		for runpath in runs:
-			run = os.path.basename(runpath).split('.cam.')[0][-3:]
+			tmp = os.path.basename(runpath)
+			if tmp.find('.cam.')!=-1:
+				run = tmp.split('.cam.')[0][-3:]
+			elif tmp.find('.clm2.')!=-1:
+				run = tmp.split('.clm2.')[0][-3:]
+			else:
+				raise Exception('Error, expecting file name to contain "cam" or "clm2": '+tmp)
 			run_whole = os.path.join(outpath_runs,data_freq,var_rename[var],'run'+run,'CESM-CAM5_'+var_rename[var]+'_'+experiment+'_'+run+'_decade.nc')
 			if not os.path.exists(run_whole):
 				if not os.path.exists(os.path.dirname(run_whole)):
@@ -125,14 +131,16 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 
 if __name__=='__main__':
 
-	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/'
+	#basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/'
+	basepath = '/export/triassic/array-01/pu17449/cesm_data/'
 	experiments = ['historical','1pt5degC','2pt0degC','1pt5degC_OS']
 
-#	data_freq = 'mon'
+	data_freq = 'mon'
 #	varlist = ['PRECL','TREFHT']
+	varlist = ['QRUNOFF']
 
-	data_freq = 'day'
-	varlist = ['PRECT']
+#	data_freq = 'day'
+#	varlist = ['PRECT']
 
 	numthreads = 2
 

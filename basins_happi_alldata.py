@@ -25,11 +25,14 @@ def list_to_string(l):
 def load_basin_data(runpath,var,basin_masks):
 	print runpath
 	basin_timeseries = {}
-	# Hack to only take input files from 2000's
-	if runpath.find('CESM')==-1:
-		run_files=glob.glob(runpath+'/*_2*-*.nc')
+	if os.path.isdir(runpath):
+		# Hack to only take input files from 2000's
+		if runpath.find('CESM')==-1:
+			run_files=glob.glob(runpath+'/*_2*-*.nc')
+		else:
+			run_files=glob.glob(runpath+'/*.nc')
 	else:
-		run_files=glob.glob(runpath+'/*.nc')
+		run_files = runpath
 
 	# Load data from file into data_all array
 	with MFDataset(run_files,'r') as f_in:
@@ -45,24 +48,34 @@ def load_basin_data(runpath,var,basin_masks):
 		#plt.contourf(masked_data[5,:])
 		#plt.colorbar()
 		#plt.show()
-		basin_timeseries[bname] = masked_data.mean(1).mean(1)
+		if len(shp)==2:
+			basin_timeseries[bname] = masked_data.mean(0).mean(0)
+		else:
+			basin_timeseries[bname] = masked_data.mean(1).mean(1)
 
 	return basin_timeseries
 		
 
 # Process all the data for the particular model, experiment and variable
-def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=None):
+def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=None,file_pattern=None):
 
 	try:
 		# Create pool of processes to process runs in parallel. 
 		pool = multiprocessing.Pool(processes=numthreads)
 
 		# Get list of runs
-		runs = get_runs(model,experiment,basepath,data_freq,var)
+		if file_pattern is None:
+			runs = get_runs(model,experiment,basepath,data_freq,var)
+		else:
+			fpath=os.path.join(basepath,file_pattern)
+			runs = glob.glob(fpath)
 		data_all = ['']*len(runs)
 
 		# Load grid information
-		f_template = glob.glob(runs[0]+'/*.nc')[0]
+		if os.path.isdir(runs[0]):
+			f_template = glob.glob(runs[0]+'/*.nc')[0]
+		else:
+			f_template = runs[0]
 		with Dataset(f_template,'r') as tmp:
 			lat = tmp.variables['lat'][:]
 			lon = tmp.variables['lon'][:]
@@ -113,7 +126,7 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		print 'finalising data'
 		for basin in masks.keys():
 			data_all[basin] = np.array(data_all[basin])
-		print len(data_all[basin]),len(data_all[basin][0])#,len(data_all[basin][1]),len(data_all[basin][2]),len(data_all[basin][3]),len(data_all[basin][4]),len(data_all[basin][5]),
+		print len(data_all[basin])#,len(data_all[basin][0])#,len(data_all[basin][1]),len(data_all[basin][2]),len(data_all[basin][3]),len(data_all[basin][4]),len(data_all[basin][5]),
 		print data_all[basin].shape
 		return data_all
 

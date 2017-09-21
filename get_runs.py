@@ -17,9 +17,13 @@ def norESM_histruns(basepath,model,experiment,var,data_freq):
 		runs.append(basepath+model+'/'+experiment+ '/est1/v1-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
 	return runs
 
-def CESM_runs(experiment,data_freq,var):
+def CMIP5_runs(basepath,experiment,data_freq,var):
+	runpath = os.path.join(basepath,var,experiment,var+'_'+data_freq+'_*.nc')
+	return glob.glob(runpath)
+
+def CESM_runs(basepath,experiment,data_freq,var):
 	print 'getting runs for CESM'
-	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
+#	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
 	runpath = os.path.join(basepath,experiment,data_freq,var,'run*')
 	return glob.glob(runpath)
 
@@ -27,7 +31,7 @@ def CESM_runs(experiment,data_freq,var):
 def get_runs(model,experiment,basepath,data_freq,var):
 	run_pattern = None
 	if model =='CESM' or model == 'CESM-CAM5':
-		return CESM_runs(experiment,data_freq,var)
+		return CESM_runs(basepath,experiment,data_freq,var)
 	if model=='MIROC5' and experiment=='All-Hist':
 		# choose specific runs
 		return miroc_histruns(basepath,model,experiment,var,data_freq)
@@ -38,6 +42,8 @@ def get_runs(model,experiment,basepath,data_freq,var):
 		run_pattern = 'ens0*'
 	elif model=='CanAM4':
 		run_pattern = 'r*i1p1'
+	elif model == 'CMIP5':
+		return CMIP5_runs(basepath,experiment,data_freq,var)
 	else: 
 	#Default
 	# model=='MIROC5' or model=='NorESM1-HAPPI' or model=='HadAM3P' or model=='CAM5-1-2-025degree': 
