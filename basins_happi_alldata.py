@@ -69,7 +69,6 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		else:
 			fpath=os.path.join(basepath,file_pattern)
 			runs = glob.glob(fpath)
-		data_all = ['']*len(runs)
 
 		# Load grid information
 		if os.path.isdir(runs[0]):

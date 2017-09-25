@@ -143,6 +143,32 @@ def process_run_raindays(runpath,run_whole,unit_conv):
 		os.remove(run_cat)
 
 # Process data for a single ensemble member/ run
+def process_run_yrmax(runpath,run_whole,unit_conv):
+	if os.path.isdir(runpath):
+		# get input files in runpath
+		run_files=glob.glob(runpath+'/*.nc')
+	else:
+		# The runpath is the file
+		run_files = [runpath]
+	run = os.path.basename(runpath)
+	print run
+
+	if len(run_files)==0:
+		raise Exception('error, no files found: '+runpath)
+	elif len(run_files)==1:
+		# Only one file, calculate yearmax
+		# CDO command
+		cdo_cmd = "cdo yearmax " + run_files[0] + " " + run_whole
+		print cdo_cmd
+		os.system(cdo_cmd)
+	else: 
+		# calculate yearmax and concatenate files
+		# CDO command
+		cdo_cmd = "cdo yearmax -cat '" +list_to_string(run_files) + "' " + run_whole
+		print cdo_cmd
+		os.system(cdo_cmd)
+
+# Process data for a single ensemble member/ run
 def process_run_Rx5day(runpath,run_whole,unit_conv):
 	if os.path.isdir(runpath):
 		# get input files in runpath
@@ -200,13 +226,31 @@ def process_run_RXx5day(runpath,run_whole,unit_conv):
 	os.system(cdo_cmd2)
 
 # Process all the data for the particular model, experiment and variable
-def process_data(model,experiment,var,index,basepath,numthreads,unit_conv):
-	data_freq = 'day'
+def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day'):
 
-	outpath_runs=os.path.join(basepath,'indices',model,experiment,index)
-	if not os.path.exists(outpath_runs):
-		os.makedirs(outpath_runs)
 	try:		
+	
+		# set specific 'process' function to call
+		if index == 'raindays':
+			process = process_run_raindays
+		elif index == 'Rx5day':
+			process = process_run_Rx5day
+		elif index == 'RXx5day':
+			process = process_run_RXx5day
+		elif index == 'dryspell':
+			process = process_run_dryspell
+		elif index == 'yrmax':
+			process = process_run_yrmax
+			if data_freq == 'day':
+				#rename index
+				index = var+'yrmaxdaily'
+			if data_freq == 'mon':
+				index = var+'yrmaxmonthly'
+		
+		outpath_runs=os.path.join(basepath,'indices',model,experiment,index)
+		if not os.path.exists(outpath_runs):
+			os.makedirs(outpath_runs)
+
 		print model,experiment,var
 		outmean = outdir+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
 		outstd = outdir+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
@@ -217,15 +261,6 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv):
 		# Create pool of processes to process runs in parallel. 
 		pool = multiprocessing.Pool(processes=numthreads)
 
-		# set specific 'process' function to call
-		if index == 'raindays':
-			process = process_run_raindays
-		elif index == 'Rx5day':
-			process = process_run_Rx5day
-		elif index == 'RXx5day':
-			process = process_run_RXx5day
-		elif index == 'dryspell':
-			process = process_run_dryspell
 
 		# Loop over runs
 		run_averages = ''
@@ -233,8 +268,10 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv):
 		for runpath in runs:
 			run = os.path.basename(runpath)
 			if os.path.isdir(runpath):
+				# Add .nc to the end if run is a dir
 				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run+'.nc')
 			else: 
+				# Run contains '.nc' already
 				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run)
 			# Only process if it doesn't exist
 			if not os.path.exists(run_whole):
@@ -269,10 +306,12 @@ if __name__=='__main__':
 	host=socket.gethostname()
 	# CAM5 data is stored and should be processed on triassic
 	if host=='triassic.ggy.bris.ac.uk':
-		basepath='/export/triassic/array-01/pu17449/happi_data_decade/'
-		models = ['CAM5-1-2-025degree']
+		#basepath='/export/triassic/array-01/pu17449/happi_data_decade/'
+		#models = ['CAM5-1-2-025degree']
+		basepath='/export/triassic/array-01/pu17449/happi_data_monthly/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
 		# Number of processes to run in parallel to process ensemble members
-		numthreads = 5
+		numthreads = 2
 	# All other data is stored on silurian
 	elif host =='silurian.ggy.bris.ac.uk':
 		basepath = '/export/silurian/array-01/pu17449/happi_data/'
@@ -281,9 +320,11 @@ if __name__=='__main__':
 		numthreads = 4
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	var = 'pr' # Get raindays (number of days where precip > 1mm)
-	outdir = '/export/silurian/array-01/pu17449/processed_data_20170627/'
-	indices = ['raindays','Rx5day','RXx5day','dryspell']
+	var = 'mrro'
+	data_freq = 'mon'
+	outdir = '/export/triassic/array-01/pu17449/processed_data_test/'
+	#indices = ['raindays','Rx5day','RXx5day','dryspell']
+	indices = ['yrmax']
 	unit_conv = 86400.
 
 	# PROCESS CESM low warming
@@ -307,7 +348,7 @@ if __name__=='__main__':
 		for experiment in experiments:
 			for index in indices[-1:]:
 				# Call process_data for this model, experiment and variable
-				process_data(model,experiment,var,index,basepath,numthreads,unit_conv)
+				process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq=data_freq)
 				# Simple Multithreading to call process_data in separate threads
 	#			t = Thread(target = process_data, args=(model,experiment,var,basepath))
 	#			t.start()
