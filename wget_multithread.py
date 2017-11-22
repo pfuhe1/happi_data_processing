@@ -5,9 +5,9 @@ import multiprocessing,time
 if __name__=='__main__':
 
 	#fwget = './wget_dailyprecip_hist.sh'
-#	fwget = 'wget_files/wget_tasmax_tasmin.sh'
-	fwget = 'wget.sh'
-	numthreads = 4 
+	#fwget = 'wget_files/wget-download-request-20170925T084752Z-0600.sh'
+	fwget = 'wget_files/wget-download-request-20171003T152435Z-0600.sh'
+	numthreads = 6 
 	# Create pool of processes to process runs in parallel. 
 	pool = multiprocessing.Pool(processes=numthreads)
 

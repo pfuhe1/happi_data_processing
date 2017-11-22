@@ -132,17 +132,18 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 if __name__=='__main__':
 
 	#basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/'
-	basepath = '/export/triassic/array-01/pu17449/cesm_data/'
-	experiments = ['historical','1pt5degC','2pt0degC','1pt5degC_OS']
-
-	data_freq = 'mon'
-#	varlist = ['PRECL','TREFHT']
-	varlist = ['QRUNOFF']
+	#basepath = '/export/triassic/array-01/pu17449/cesm_data/'
+	basepath = '/data/scratch/cesm_data/'
+	experiments = ['historical','1pt5degC','2pt0degC']#,'1pt5degC_OS']
 
 #	data_freq = 'day'
-#	varlist = ['PRECT']
+#	varlist = ['PRECL','TREFHT']
+#	varlist = ['QRUNOFF']
 
-	numthreads = 2
+	data_freq = 'day'
+	varlist = ['PRECT']
+
+	numthreads = 4
 
 	for experiment in experiments:
 		for var in varlist:

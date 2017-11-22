@@ -46,6 +46,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 	op_ensstd=['']*len(operators)
 	run_averages = ''
 	run_averages_op = ['']*len(operators)
+	out_ensmean = os.path.join(outdir,'year_ensmean/')
 	try:		
 		print model,experiment,var
 		clim_ensmean = outdir+model+'.'+var+'.'+experiment+'_yearclim_ensmean.nc'
@@ -53,8 +54,8 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 		#if data_freq=='day':
 		for i,op in enumerate(operators):
 			opname = op.replace(',','')
-			op_ensmean[i] = outdir+model+'.'+var+'.'+experiment+'_year'+opname+'_ensmean.nc'
-			op_ensstd[i] = outdir+model+'.'+var+'.'+experiment+'_year'+opname+'_ensstd.nc'
+			op_ensmean[i] = out_ensmean+model+'.'+var+'.'+experiment+'_year'+opname+'_ensmean.nc'
+			op_ensstd[i] = out_ensmean+model+'.'+var+'.'+experiment+'_year'+opname+'_ensstd.nc'
 
 	#	if os.path.exists(clim_ensmean) and os.path.exists(clim_ensstd):
 	#		print 'files already exist, skipping'
@@ -66,7 +67,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 		# Get list of runs
 		runs = get_runs(model,experiment,basepath,data_freq,var)
 
-		outpath_runs=os.path.join(basepath,'seas_data',model,experiment,var)
+		outpath_runs=os.path.join(outdir,'year_data',model,experiment,var)
 		if not os.path.exists(outpath_runs):
 			os.makedirs(outpath_runs)
 
@@ -141,7 +142,6 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 
 if __name__=='__main__':
 
-	outdir = '/export/silurian/array-01/pu17449/seas_data_20170731/'
 
 	host=socket.gethostname()
 	# CAM5 data is stored and should be processed on triassic
@@ -156,16 +156,22 @@ if __name__=='__main__':
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 1
+		outdir = '/export/silurian/array-01/pu17449/seas_data_20170731/'
+	elif host == 'happi.ggy.bris.ac.uk':
+		basepath = '/data/scratch/happi_data/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','CESM-CAM5']
+		numthreads=20
+		outdir = '/data/scratch/pu17449/happi_processed/'
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	varlist = ['pr','tas']
+	varlist = ['pr']#,'tas']
 	data_freq = {'pr':'mon','tas':'mon'}
 
 	# PROCESS CESM low warming
-	#models = ['CESM-CAM5']
+	models = ['CESM-CAM5']
 	# override defaults
-	#basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data/'
-	#experiments = ['historical','1pt5degC','2pt0degC']
+	basepath = '/data/scratch/cesm_data/decade_data_v2/'
+	experiments = ['historical','1pt5degC','2pt0degC']
 #	outdir = '/export/silurian/array-01/pu17449/CESM_low_warming/seas_data_CESM/'
 
 	for model in models:

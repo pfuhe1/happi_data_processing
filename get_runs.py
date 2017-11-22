@@ -9,6 +9,11 @@ def miroc_histruns(basepath,model,experiment,var,data_freq):
 	for run in range(111,161):
 		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
 	return runs
+	
+# Just take v2 of miroc
+def miroc_15runs(basepath,model,experiment,var,data_freq):
+	runpath = basepath+model+'/'+experiment+ '/*/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3)
+	return glob.glob(runpath)
 
 # Choose runs 1-125 for NorESM1-HAPPI Hist
 def norESM_histruns(basepath,model,experiment,var,data_freq):
@@ -19,6 +24,10 @@ def norESM_histruns(basepath,model,experiment,var,data_freq):
 
 def CMIP5_runs(basepath,experiment,data_freq,var):
 	runpath = os.path.join(basepath,var,experiment,var+'_'+data_freq+'_*.nc')
+	return glob.glob(runpath)
+
+def HadAM3P_runs(basepath,experiment,data_freq,var):
+	runpath = os.path.join(basepath,'HadAM3P',experiment,data_freq,var,'run*')#,'HadAM3P_'+var+'_'+experiment+'_*.nc')
 	return glob.glob(runpath)
 
 def CESM_runs(basepath,experiment,data_freq,var):
@@ -42,6 +51,8 @@ def get_runs(model,experiment,basepath,data_freq,var):
 		run_pattern = 'ens0*'
 	elif model=='CanAM4':
 		run_pattern = 'r*i1p1'
+	elif model=='HadAM3P':
+		return HadAM3P_runs(basepath,experiment,data_freq,var)
 	elif model == 'CMIP5':
 		return CMIP5_runs(basepath,experiment,data_freq,var)
 	else: 
@@ -59,7 +70,7 @@ def get_runs(model,experiment,basepath,data_freq,var):
 		version = 'v2-0'
 
 	if run_pattern:
-		pathpattern=basepath+model+'/'+experiment+ '/*/'+version+'/'+data_freq+'/atmos/'+ var+'/'+run_pattern
+		pathpattern=basepath+model+'/'+experiment+ '/*/'+version+'/'+data_freq+'/*/'+ var+'/'+run_pattern
 		print pathpattern
 		runs = glob.glob(pathpattern)
 	return runs

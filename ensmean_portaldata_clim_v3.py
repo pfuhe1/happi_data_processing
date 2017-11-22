@@ -40,15 +40,18 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 	op_ensstd=['']*len(operators)
 	run_averages = ''
 	run_averages_op = ['']*len(operators)
+	out_ensmean = os.path.join(outdir,'monclim_ensdata')
+	if not os.path.exists(out_ensmean):
+		os.makedirs(out_ensmean)
 	try:		
 		print model,experiment,var
-		clim_ensmean = outdir+model+'.'+var+'.'+experiment+'_monclim_ensmean.nc'
-		clim_ensstd = outdir+model+'.'+var+'.'+experiment+'_monclim_ensstd.nc'
+		clim_ensmean = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_monclim_ensmean.nc'
+		clim_ensstd = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_monclim_ensstd.nc'
 		if data_freq=='day':
 			for i,op in enumerate(operators):
 				opname = op.replace(',','')
-				op_ensmean[i] = outdir+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensmean.nc'
-				op_ensstd[i] = outdir+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensstd.nc'
+				op_ensmean[i] = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensmean.nc'
+				op_ensstd[i] = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensstd.nc'
 
 	#	if os.path.exists(clim_ensmean) and os.path.exists(clim_ensstd):
 	#		print 'files already exist, skipping'
@@ -60,7 +63,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 		# Get list of runs
 		runs = get_runs(model,experiment,basepath,data_freq,var)
 
-		outpath_runs=os.path.join(basepath,'monclim_data',model,experiment,var)
+		outpath_runs=os.path.join(outdir,'monclim_data',model,experiment,var)
 		if not os.path.exists(outpath_runs):
 			os.makedirs(outpath_runs)
 
@@ -136,7 +139,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 
 if __name__=='__main__':
 
-	outdir = '/export/silurian/array-01/pu17449/processed_data_20170627/'
+	outdir = '/export/silurian/array-01/pu17449/happi_processed/'
 
 	host=socket.gethostname()
 	# CAM5 data is stored and should be processed on triassic
@@ -151,17 +154,23 @@ if __name__=='__main__':
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 16
+		outdir = '/export/silurian/array-01/pu17449/happi_processed/'
+	elif host == 'happi.ggy.bris.ac.uk':
+		basepath = '/data/scratch/happi_data/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','CESM-CAM5']
+		numthreads=20
+		outdir = '/data/scratch/pu17449/happi_processed/'
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	varlist = ['pr','tasmin','tasmax','rsds','tas']
+	varlist = ['pr',]#'tasmin','tasmax','rsds','tas']
 	data_freq = {'pr':'day','tasmin':'day','tasmax':'day','tas':'mon','rsds':'mon'}
 
 
 	for model in models:
 		# Exception to the data_freq list above is HadAM3P which has daily 'rsds' and 'tas'
-		if model == 'HadAM3P':
-			data_freq['rsds']='day'
-			data_freq['tas']='day'
+		#if model == 'HadAM3P':
+			#data_freq['rsds']='day'
+			#data_freq['tas']='day'
 		for experiment in experiments:
 			for var in varlist:
 				process_data(model,experiment,var,basepath,numthreads,data_freq[var])

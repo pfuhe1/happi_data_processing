@@ -247,13 +247,16 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			if data_freq == 'mon':
 				index = var+'yrmaxmonthly'
 		
-		outpath_runs=os.path.join(basepath,'indices',model,experiment,index)
+		outpath_runs=os.path.join(outdir,'indices_data',model,experiment,index)
 		if not os.path.exists(outpath_runs):
 			os.makedirs(outpath_runs)
 
+		if not os.path.exists(outdir+'/indices_ensmean/'):
+			os.makedirs(outdir+'/indices_ensmean/')
+			
 		print model,experiment,var
-		outmean = outdir+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
-		outstd = outdir+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
+		outmean = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
+		outstd = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
 		if os.path.exists(outmean) and os.path.exists(outstd):
 			print 'files already exist, skipping'
 			return
@@ -318,22 +321,29 @@ if __name__=='__main__':
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 4
+	elif host =='happi.ggy.bris.ac.uk':
+		basepath='/data/scratch/happi_data/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
+		# Number of processes to run in parallel to process ensemble members
+		numthreads = 10
+		outdir = '/data/scratch/pu17449/happi_processed/'
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	var = 'mrro'
-	data_freq = 'mon'
-	outdir = '/export/triassic/array-01/pu17449/processed_data_test/'
+	var = 'pr'
+	data_freq = 'day'
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
-	indices = ['yrmax']
+	#indices = ['yrmax']
+	indices = ['RXx5day']
 	unit_conv = 86400.
 
 	# PROCESS CESM low warming
-#	models = ['CESM-CAM5']
+	models = ['CESM-CAM5']
 #	# override defaults
-#	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
-#	experiments = ['historical','1pt5degC','2pt0degC']
-#	outdir = '/export/silurian/array-01/pu17449/CESM_low_warming/indices/'
-#	unit_conv = 86400.*1000
+	#basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
+	basepath = '/data/scratch/cesm_data/decade_data_v2/'
+	experiments = ['historical','1pt5degC','2pt0degC']
+#	#outdir = '/export/silurian/array-01/pu17449/CESM_low_warming/indices/'
+	unit_conv = 86400.*1000
 
 	# PROCESS CMIP5 slices
 #	models = ['CMIP5']
