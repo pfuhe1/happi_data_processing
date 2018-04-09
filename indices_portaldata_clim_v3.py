@@ -6,7 +6,7 @@ from get_runs import get_runs
 from netCDF4 import MFDataset,Dataset
 import numpy as np
 
-# Create list into a string (also adding monmean operator)
+# Create list into a string
 def list_to_string(l):
 	s = ''
 	for item in l:
@@ -226,7 +226,7 @@ def process_run_RXx5day(runpath,run_whole,unit_conv):
 	os.system(cdo_cmd2)
 
 # Process all the data for the particular model, experiment and variable
-def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day'):
+def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos'):
 
 	try:		
 	
@@ -247,13 +247,16 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			if data_freq == 'mon':
 				index = var+'yrmaxmonthly'
 		
-		outpath_runs=os.path.join(basepath,'indices',model,experiment,index)
+		outpath_runs=os.path.join(outdir,'indices_data',model,experiment,index)
 		if not os.path.exists(outpath_runs):
 			os.makedirs(outpath_runs)
 
+		if not os.path.exists(outdir+'/indices_ensmean/'):
+			os.makedirs(outdir+'/indices_ensmean/')
+			
 		print model,experiment,var
-		outmean = outdir+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
-		outstd = outdir+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
+		outmean = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
+		outstd = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
 		if os.path.exists(outmean) and os.path.exists(outstd):
 			print 'files already exist, skipping'
 			return
@@ -264,7 +267,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 
 		# Loop over runs
 		run_averages = ''
-		runs = get_runs(model,experiment,basepath,data_freq,var)
+		runs = get_runs(model,experiment,basepath,data_freq,var,domain=domain)
 		for runpath in runs:
 			run = os.path.basename(runpath)
 			if os.path.isdir(runpath):
@@ -318,22 +321,38 @@ if __name__=='__main__':
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 4
+	elif host =='happi.ggy.bris.ac.uk':
+		basepath='/data/scratch/happi_data/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
+		# Number of processes to run in parallel to process ensemble members
+		numthreads = 2	
+		outdir = '/data/scratch/pu17449/processed_data/'
+	elif host =='anthropocene.ggy.bris.ac.uk':
+		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
+		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
+		models = ['NorESM1-HAPPI','CAM4-2degree','HadAM3P']
+		# Number of processes to run in parallel to process ensemble members
+		numthreads = 4
+		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
+
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 	var = 'mrro'
+	domain = 'land'
 	data_freq = 'mon'
-	outdir = '/export/triassic/array-01/pu17449/processed_data_test/'
+
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
 	indices = ['yrmax']
 	unit_conv = 86400.
 
 	# PROCESS CESM low warming
-#	models = ['CESM-CAM5']
+	#models = ['CESM-CAM5']
 #	# override defaults
-#	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
-#	experiments = ['historical','1pt5degC','2pt0degC']
+	#basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
+	#basepath = '/export/anthropocene/array-01/pu17449/cesm_data/decade_data_v2/'
+	#experiments = ['historical','1pt5degC','2pt0degC']
 #	outdir = '/export/silurian/array-01/pu17449/CESM_low_warming/indices/'
-#	unit_conv = 86400.*1000
+#	unit_conv = 86400.*1000 # Note, not needed for runoff
 
 	# PROCESS CMIP5 slices
 #	models = ['CMIP5']
@@ -346,9 +365,9 @@ if __name__=='__main__':
 
 	for model in models:
 		for experiment in experiments:
-			for index in indices[-1:]:
+			for index in indices:
 				# Call process_data for this model, experiment and variable
-				process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq=data_freq)
+				process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq=data_freq,domain=domain)
 				# Simple Multithreading to call process_data in separate threads
 	#			t = Thread(target = process_data, args=(model,experiment,var,basepath))
 	#			t.start()
