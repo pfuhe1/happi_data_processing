@@ -26,10 +26,6 @@ def load_basin_data(runpath,var,basin_masks):
 	print runpath
 	basin_timeseries = {}
 	if os.path.isdir(runpath):
-		# Hack to only take input files from 2000's
-		#if runpath.find('CESM')==-1:
-		#	run_files=glob.glob(runpath+'/*_2*-*.nc')
-		#else:
 		run_files=glob.glob(runpath+'/*.nc')
 	else:
 		run_files = runpath
@@ -69,22 +65,21 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		else:
 			fpath=os.path.join(basepath,file_pattern)
 			runs = glob.glob(fpath)
-			print fpath
-		print runs
 
 		# Load grid information
 		if os.path.isdir(runs[0]):
 			f_template = glob.glob(runs[0]+'/*.nc')[0]
 		else:
 			f_template = runs[0]
-		print f_template
+		#print f_template
 		with Dataset(f_template,'r') as tmp:
 			try:
 				lat = tmp.variables['lat'][:]
 				lon = tmp.variables['lon'][:]
 			except:
 				lat = tmp.variables['latitude0'][:]
-				lon = tmp.variables['longitude0'][:]		# Create 2D arrays of lon and lat
+				lon = tmp.variables['longitude0'][:]
+		# Create 2D arrays of lon and lat
 		nlat = len(lat)
 		nlon = len(lon)
 		lonxx,latyy=np.meshgrid(lon,lat)

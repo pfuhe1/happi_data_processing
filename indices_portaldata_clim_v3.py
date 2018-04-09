@@ -50,7 +50,7 @@ def create_netcdf_dryspell(template,var,data,outname):
 				outfile.createVariable(dim,'d',(dim,))
 				outfile.variables[dim][:]=template.variables[dim][:]
 				
-			#print template.variables[dim].__dict__
+			ndic#print template.variables[dim].__dict__
 			for att in template.variables[dim].ncattrs():
 				outfile.variables[dim].__setattr__(att,template.variables[dim].__getattribute__(att))
 
@@ -341,8 +341,10 @@ if __name__=='__main__':
 	domain = 'land'
 	data_freq = 'mon'
 
+
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
 	indices = ['yrmax']
+	#indices = ['RXx5day']
 	unit_conv = 86400.
 
 	# PROCESS CESM low warming
@@ -353,6 +355,9 @@ if __name__=='__main__':
 	#experiments = ['historical','1pt5degC','2pt0degC']
 #	outdir = '/export/silurian/array-01/pu17449/CESM_low_warming/indices/'
 #	unit_conv = 86400.*1000 # Note, not needed for runoff
+	#basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
+	#basepath = '/data/scratch/cesm_data/decade_data_v2/'
+#	#outdir = '/export/silurian/array-01/pu17449/CESM_low_warming/indices/'
 
 	# PROCESS CMIP5 slices
 #	models = ['CMIP5']
