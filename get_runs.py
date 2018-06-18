@@ -72,7 +72,23 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 	elif model == 'CAM4-2degree' and experiment[:4]=='Plus':
 		# Choose version v2-0 for CAM4 future runs
 		version = 'v2-0'
-
+	elif model == 'ECHAM6-3-LR' and experiment == 'All-Hist':
+		version = 'v1-0'
+	elif model == 'MIROC5' and experiment == 'Plus15-Future':
+		# Incorrect data was replaced with v3-0
+		version = 'v3-0'
+	elif model == 'MIROC5' and experiment == 'Plus20-Future':
+		# Just use v2-0, not additional 'Land' experiments
+		version = 'v2-0'
+	elif model == 'NorESM1-HAPPI' and experiment[:4]=='Plus':
+		#use version 2 for NorESM future runs 
+		version = 'v1-0'
+	elif model == 'HadAM3P':
+		# Use version v1-2 for HadAM3P 
+		# (the data should be the same, but this was reprocessed with renamed dimensions)
+		version = 'v1-2' 
+		
+	# Get list of paths that match our filename pattern
 	if run_pattern:
 		pathpattern=basepath+model+'/'+experiment+ '/*/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
 		print pathpattern
@@ -116,8 +132,8 @@ def get_bc_runs(model,basepath,data_freq,var,domain='atmos'):
 	elif model=='CAM4-2degree':
 		run_pattern = 'ens1*'
 	elif model=='CanAM4':
-#		run_pattern = 'r*i1p1'
-		raise Exception('Need to determine bias correction runs for model:'+model)
+		run_pattern = 'r*i1p1'
+#		raise Exception('Need to determine bias correction runs for model:'+model)
 	elif model == 'CMIP5':
 #		return CMIP5_runs(basepath,experiment,data_freq,var)
 		raise Exception('Need to determine bias correction runs for model:'+model)
@@ -132,15 +148,16 @@ def get_bc_runs(model,basepath,data_freq,var,domain='atmos'):
 	if model == 'CAM5-1-2-025degree' and experiment == 'All-Hist':
 		#Choose runs from v1-0 (not v1-0-aero) for CAM5-1-2-025 Hist
 		version = 'v1-0'
-	elif model == 'CAM4-2degree' and experiment[:4]=='Plus':
-		# Choose version v2-0 for CAM4 future runs
-		version = 'v2-0'
+	elif model =='ECHAM6-3-LR':
+		version = 'v1-1'
 
 	# set est (estimate) if necessary
 	est = '*'
 	if model == 'HadAM3P' or model=='HadAM3P-EU25':
 		est = 'est2' # Use est2 for bias correction runs
-
+# NOTE: for CanAM4 est2 actually points to amip runs from CMIP5 as there aren't any bias correction runs specifically for HAPPI
+	if model =='CanAM4':
+		est = 'est2' 
 	if run_pattern:
 		pathpattern=basepath+model+'/'+experiment+ '/'+est+'/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
 		print pathpattern

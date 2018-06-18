@@ -73,7 +73,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 		# Get list of runs
 		runs = get_runs(model,experiment,basepath,data_freq,var)
 
-		outpath_runs=os.path.join(basepath,'seas_data',model,experiment,var)
+		outpath_runs=os.path.join(outdir,'seas_data',model,experiment,var)
 		if not os.path.exists(outpath_runs):
 			os.makedirs(outpath_runs)
 
@@ -165,10 +165,16 @@ if __name__=='__main__':
 	elif host =='happi.ggy.bris.ac.uk':
 		basepath = '/data/scratch/happi_data/'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','CESM-CAM5']
+	elif host == 'anthropocene.ggy.bris.ac.uk':
+		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
+		outdir = '/export/anthropocene/array-01/pu17449/happi_processed/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
+		numthreads = 16
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	varlist = ['pr','tas']
-	data_freq = {'pr':'mon','tas':'mon'}
+	#varlist = ['pr','tas']
+	varlist = ['ua','va']
+	data_freq = {'pr':'mon','tas':'mon','ua':'mon','va':'mon'}
 
 	# PROCESS CESM low warming
 #	models = ['CESM-CAM5']
@@ -178,7 +184,7 @@ if __name__=='__main__':
 #	outdir = '/export/silurian/array-01/pu17449/seas_data_CESM/'
 
 	for model in models:
-		if model = 'CESM-CAM5':
+		if model == 'CESM-CAM5':
 			experiments = ['historical','1pt5degC','2pt0degC']
 		else:
 			experiments = ['All-Hist','Plus15-Future','Plus20-Future']

@@ -139,7 +139,6 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 
 if __name__=='__main__':
 
-	outdir = '/export/silurian/array-01/pu17449/happi_processed/'
 
 	host=socket.gethostname()
 	# CAM5 data is stored and should be processed on triassic
@@ -160,6 +159,13 @@ if __name__=='__main__':
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','CESM-CAM5']
 		numthreads=20
 		outdir = '/data/scratch/pu17449/happi_processed/'
+	elif host =='anthropocene.ggy.bris.ac.uk':
+		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
+		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','CESM-CAM5','ECHAM6-3-LR']
+		# Number of processes to run in parallel to process ensemble members
+		numthreads = 4
+		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 	varlist = ['pr',]#'tasmin','tasmax','rsds','tas']

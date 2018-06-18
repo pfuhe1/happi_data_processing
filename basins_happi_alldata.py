@@ -22,13 +22,17 @@ def list_to_string(l):
 		s += item +' '
 	return s
 
-def load_basin_data(runpath,var,basin_masks):
+def load_basin_data(runpath,model,experiment,var,basin_masks):
 	print runpath
 	basin_timeseries = {}
 	if os.path.isdir(runpath):
 		run_files=glob.glob(runpath+'/*.nc')
 	else:
 		run_files = runpath
+	
+	# Hack for issues with last year of MIROC data (11 years)
+	if model == 'MIROC5':# and (experiment=='All-Hist' or experiment == 'Plus20-Future'):
+		run_files = run_files[:-1]
 
 	# Load data from file into data_all array
 	with MFDataset(run_files,'r') as f_in:
@@ -65,7 +69,7 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		else:
 			fpath=os.path.join(basepath,file_pattern)
 			runs = glob.glob(fpath)
-
+		
 		# Load grid information
 		if os.path.isdir(runs[0]):
 			f_template = glob.glob(runs[0]+'/*.nc')[0]
@@ -103,7 +107,7 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		for i,runpath in enumerate(runs):
 			run = os.path.basename(runpath)
 			# Add the process to the pool
-			result_all[i]  = pool.apply_async(load_basin_data,(runpath,var,masks))
+			result_all[i]  = pool.apply_async(load_basin_data,(runpath,model,experiment,var,masks))
 			#result_all[i] = load_basin_data(runpath,var,masks)
 
 		# close the pool and make sure the processing has finished
