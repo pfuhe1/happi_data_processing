@@ -1,8 +1,11 @@
 # Script to do monthly means then ensemble average of HAPPI data
+# Peter Uhe 2018-07-15
+# Version 4 to only select 10 years (a few runs are longer)
+# 
 import os,glob,tempfile,shutil,socket
 from threading import Thread
 import multiprocessing
-from get_runs import get_runs
+from get_runs import get_runs_all
 from netCDF4 import MFDataset,Dataset
 import numpy as np
 
@@ -143,7 +146,7 @@ def process_run_raindays(runpath,run_whole,unit_conv):
 		os.remove(run_cat)
 
 # Process data for a single ensemble member/ run
-def process_run_yrmax(runpath,run_whole,unit_conv):
+def process_run_yrmax(runpath,run_whole,unit_conv,timesel):
 	if os.path.isdir(runpath):
 		# get input files in runpath
 		run_files=glob.glob(runpath+'/*.nc')
@@ -158,18 +161,18 @@ def process_run_yrmax(runpath,run_whole,unit_conv):
 	elif len(run_files)==1:
 		# Only one file, calculate yearmax
 		# CDO command
-		cdo_cmd = "cdo yearmax " + run_files[0] + " " + run_whole
+		cdo_cmd = "cdo yearmax "+timesel + run_files[0] + " " + run_whole
 		print cdo_cmd
 		os.system(cdo_cmd)
 	else: 
 		# calculate yearmax and concatenate files
 		# CDO command
-		cdo_cmd = "cdo yearmax -cat '" +list_to_string(run_files) + "' " + run_whole
+		cdo_cmd = "cdo -L yearmax "+timesel+ "-cat '" +list_to_string(run_files) + "' " + run_whole
 		print cdo_cmd
-		os.system(cdo_cmd)
+		os.system(cdo_cmd)	
 
 # Process data for a single ensemble member/ run
-def process_run_Rx5day(runpath,run_whole,unit_conv):
+def process_run_Rx5day(runpath,run_whole,unit_conv,timesel):
 	if os.path.isdir(runpath):
 		# get input files in runpath
 		run_files=glob.glob(runpath+'/*.nc')
@@ -184,18 +187,18 @@ def process_run_Rx5day(runpath,run_whole,unit_conv):
 	elif len(run_files)==1:
 		# Only one file, calculate Rx5day (monthly 5 day max)
 		# CDO command
-		cdo_cmd = "cdo ymonmax -runmean,5 " + run_files[0] + " " + run_whole
+		cdo_cmd = "cdo ymonmax -runmean,5 " + timesel + run_files[0] + " " + run_whole
 		print cdo_cmd
 		os.system(cdo_cmd)
 	else: 
 		# calculate Rx5day (monthly 5 day max) and concatenate files
 		# CDO command
-		cdo_cmd = "cdo ymonmax -runmean,5 -cat '" +list_to_string(run_files) + "' " + run_whole
+		cdo_cmd = "cdo -L ymonmax -runmean,5 "+timesel+" -cat '" +list_to_string(run_files) + "' " + run_whole
 		print cdo_cmd
 		os.system(cdo_cmd)
 
 # Process data for a single ensemble member/ run
-def process_run_RXx5day(runpath,run_whole,unit_conv):
+def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 	# Generates 10 yearly mean of RXx5day, and 'yrly' files of RXx5day (yearly max of 5 daily pr)
 	if os.path.isdir(runpath):
 		# get input files in runpath
@@ -211,13 +214,13 @@ def process_run_RXx5day(runpath,run_whole,unit_conv):
 	elif len(run_files)==1:
 		# Only one file, calculate RXx5day (annual 5 day max)
 		# CDO command
-		cdo_cmd = "cdo yearmax -runmean,5 " + run_files[0] + " " + run_whole[:-3]+'_yrly.nc'
+		cdo_cmd = "cdo -L yearmax -runmean,5 " + timesel + run_files[0] + " " + run_whole[:-3]+'_yrly.nc'
 		print cdo_cmd
 		os.system(cdo_cmd)
 	else: 
 		# calculate RXx5day (annual 5 day max) and concatenate files
 		# CDO command
-		cdo_cmd = "cdo yearmax -runmean,5 -cat '" +list_to_string(run_files) + "' " + run_whole[:-3]+'_yrly.nc'
+		cdo_cmd = "cdo -L yearmax -runmean,5  "+ timesel + " -cat '" +list_to_string(run_files) + "' " + run_whole[:-3]+'_yrly.nc'
 		print cdo_cmd
 		os.system(cdo_cmd)
 
@@ -227,6 +230,16 @@ def process_run_RXx5day(runpath,run_whole,unit_conv):
 
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos'):
+
+	timespan = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
+	try:
+		timesel = timespan[experiment]
+		if model == 'HadAM3P' and ( experiment == 'Plus15-Future' or experiment == 'Plus20-Future'):
+			timesel = '2090-01-01,2099-12-31'
+		timesel = ' -seldate,'+timesel+' '
+		#if model == 'CESM-CAM5':
+	except: # if experiment isn't in the timespan dictionary (e.g. CESM-CAM5 model)
+		timesel = ' ' 
 
 	try:		
 	
@@ -267,7 +280,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 
 		# Loop over runs
 		run_averages = ''
-		runs = get_runs(model,experiment,basepath,data_freq,var,domain=domain)
+		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
 		for runpath in runs:
 			run = os.path.basename(runpath)
 			if os.path.isdir(runpath):
@@ -279,7 +292,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			# Only process if it doesn't exist
 			if not os.path.exists(run_whole):
 				#raise Exception('Debug, not processing runs')
-				pool.apply_async(process,(runpath,run_whole,unit_conv))
+				pool.apply_async(process,(runpath,run_whole,unit_conv,timesel))
 				#process(runpath,run_whole)
 			# Add this run to list
 			run_averages += run_whole +' '
@@ -339,21 +352,25 @@ if __name__=='__main__':
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 	#var = 'mrro'
 	#domain = 'land'
-	data_freq = 'mon'
+	
 	var = 'pr'
 	domain = 'atmos'
-
-	#indices = ['raindays','Rx5day','RXx5day','dryspell']
-	indices = ['yrmax']
-	#indices = ['RXx5day']
 	unit_conv = 86400.
 
+#	indices = ['yrmax']
+#	data_freq = 'mon'
+	
+	#indices = ['raindays','Rx5day','RXx5day','dryspell']
+	indices = ['RXx5day']
+	data_freq = 'day'	
+
+
 	# PROCESS CESM low warming
-	models = ['CESM-CAM5']
 #	# override defaults
-	basepath = '/export/anthropocene/array-01/pu17449/cesm_data/decade_data_v2/'
-	experiments = ['historical','1pt5degC','2pt0degC']
-	unit_conv = 86400.*1000 # Note, not needed for runoff
+#	models = ['CESM-CAM5']
+#	basepath = '/export/anthropocene/array-01/pu17449/cesm_data/decade_data_v2/'
+#	experiments = ['historical','1pt5degC','2pt0degC']
+#	unit_conv = 86400.*1000 # Note, not needed for runoff
 
 	# PROCESS CMIP5 slices
 #	models = ['CMIP5']

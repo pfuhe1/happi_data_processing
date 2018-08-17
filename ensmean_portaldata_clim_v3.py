@@ -45,13 +45,13 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 		os.makedirs(out_ensmean)
 	try:		
 		print model,experiment,var
-		clim_ensmean = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_monclim_ensmean.nc'
-		clim_ensstd = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_monclim_ensstd.nc'
+		clim_ensmean = os.path.join(outdir,'monclim_ensmean',model+'.'+var+'.'+experiment+'_monclim_ensmean.nc')
+		clim_ensstd = os.path.join(outdir,'monclim_ensmean',model+'.'+var+'.'+experiment+'_monclim_ensstd.nc')
 		if data_freq=='day':
 			for i,op in enumerate(operators):
 				opname = op.replace(',','')
-				op_ensmean[i] = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensmean.nc'
-				op_ensstd[i] = out_ensmean+'/'+model+'.'+var+'.'+experiment+'_mon'+opname+'_ensstd.nc'
+				op_ensmean[i] = os.path.join(outdir,'monclim_ensmean',model+'.'+var+'.'+experiment+'_mon'+opname+'_ensmean.nc')
+				op_ensstd[i] = os.path.join(outdir,'monclim_ensmean',model+'.'+var+'.'+experiment+'_mon'+opname+'_ensstd.nc')
 
 	#	if os.path.exists(clim_ensmean) and os.path.exists(clim_ensstd):
 	#		print 'files already exist, skipping'
@@ -162,14 +162,15 @@ if __name__=='__main__':
 	elif host =='anthropocene.ggy.bris.ac.uk':
 		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
 		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','CESM-CAM5','ECHAM6-3-LR']
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR']#'CESM-CAM5',
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 4
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
-	varlist = ['pr',]#'tasmin','tasmax','rsds','tas']
-	data_freq = {'pr':'day','tasmin':'day','tasmax':'day','tas':'mon','rsds':'mon'}
+	#varlist = ['pr',]#'tasmin','tasmax','rsds','tas']
+	varlist = ['ua','va']
+	data_freq = {'pr':'day','tasmin':'day','tasmax':'day','tas':'mon','rsds':'mon', 'ua':'mon','va':'mon'}
 
 
 	for model in models:

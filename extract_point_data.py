@@ -14,7 +14,7 @@ import argparse
 #
 def create_netcdf_point(template,var,data,outname,y,x):
 	if type(template)==type('') or type(template)==type([]): # template is a string
-		print template
+		#print template
 		template = MFDataset(template,'r') # Read file
 
 	# create outfile object
@@ -44,6 +44,8 @@ def create_netcdf_point(template,var,data,outname,y,x):
 				outfile.variables['time'].__setattr__(att,template.variables[dim].__getattribute__(att))
 		
 			#print template.variables[dim].__dict__
+
+	print 'Created variables for lat and lon:',outfile.variables['lat'][0],outfile.variables['lon'][0]
 
 	# Create dimension for 'n'
 	outfile.createDimension('ens',data.shape[0])
@@ -85,8 +87,9 @@ def create_netcdf_point(template,var,data,outname,y,x):
 #
 #	outfile.__setattr__('history',getattr(outfile,'history') + '\n Precip for closest point to dublin, calculated by P Uhe')
 	
-
 	outfile.close()
+	print 'Finished creating data file',outname
+	
 
 ######################################################################################
 #
@@ -121,7 +124,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq,x,y,location
 
 		if not os.path.exists(run_whole):
 			try:
-				print run_whole
+				print 'Extracting data for:',run_whole
 		
 				# Get list of runs
 				runs = get_runs(model,experiment,basepath,data_freq,var)

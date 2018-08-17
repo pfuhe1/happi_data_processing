@@ -14,15 +14,19 @@ local_basedir='/export/anthropocene/array-01/pu17449/happi_data/'
 remote_basedir="cori:/global/project/projectdirs/m1517/C20C/"
 
 # List models to sync
-models_list=['MIROC/MIROC5','NCC/NorESM1-HAPPI','CCCma/CanAM4','ETH/CAM4-2degree','MPI-M/ECHAM6-3-LR']
+models_list=['MIROC/MIROC5','NCC/NorESM1-HAPPI','CCCma/CanAM4','ETH/CAM4-2degree','MPI-M/ECHAM6-3-LR','LBNL/CAM5-1-2-025degree']
+#models_list = ['LBNL/CAM5-1-2-025degree']
 
 # List variables to sync
 #
+includevars = []
 #Monthly vars:
-#includevars = ['pr_Amon','tas*_Amon','rsds_Amon','hfls_Amon','mrro*_Lmon','ua_Amon','va_Amon','zg_Amon','ps_Amon','psl_Amon']
+includevars += ['pr_Amon','tas*_Amon','rsds_Amon','hfls_Amon','mrro*_Lmon','ua_Amon','va_Amon','zg_Amon','ps_Amon','psl_Amon','hurs_Amon']
+#includevars += ['pr_Amon','tas*_Amon','hfls_Amon','mrro*_Lmon','ua_Amon','va_Amon','zg_Amon','ps_Amon']
 
 # Daily vars
-includevars = ['pr_Aday','rsds_Aday','tas*_Aday']
+#includevars += ['pr_Aday','rsds_Aday','tas*_Aday']
+#includevars += ['pr_Aday','tas*_Aday','hurs_Aday']
 
 # Convert includevars to rsync include string
 includearr=includestr(includevars)

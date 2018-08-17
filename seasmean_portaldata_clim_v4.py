@@ -5,10 +5,10 @@ import socket
 from get_runs import get_runs
 
 
-timesel = '-seltimestep'
-for t in range(3,120):
-	timesel=timesel+','+str(t)
-timesel = timesel+' '
+#timesel = '-seltimestep'
+#for t in range(3,120):
+#	timesel=timesel+','+str(t)
+#timesel = timesel+' '
 
 # Create list into a string 
 def list_to_string(l):
@@ -18,7 +18,7 @@ def list_to_string(l):
 	return s
 
 # Process data for a single ensemble member/ run
-def process_run(runpath,run_whole,operator='mean'):
+def process_run(runpath,run_whole,timesel,operator='mean'):
 	run = os.path.basename(runpath)
 	print run
 	run_files=glob.glob(runpath+'/*.nc')
@@ -31,18 +31,18 @@ def process_run(runpath,run_whole,operator='mean'):
 		# Only one file
 		# CDO command
 		if operator == 'mean':
-			cdo_cmd = 'cdo yseas'+operator+' ' + timesel + run_files[0] + ' ' + run_whole
+			cdo_cmd = 'cdo -L selvar,'+var+' -yseas'+operator+' ' + timesel + run_files[0] + ' ' + run_whole
 		else:
-			cdo_cmd = 'cdo yseas'+operator+' -seasmean ' +timesel + run_files[0] + ' ' + run_whole
+			cdo_cmd = 'cdo -L selvar,'+var+' -yseas'+operator+' -seasmean ' +timesel + run_files[0] + ' ' + run_whole
 		print cdo_cmd
 		os.system(cdo_cmd)
 	else: 
 		# concatenate files
 		# CDO command
 		if operator == 'mean':
-			cdo_cmd = "cdo yseas"+operator+' '+ timesel+" -cat '" + list_to_string(run_files) + "' "+ run_whole
+			cdo_cmd = "cdo -L selvar,"+var+" -yseas"+operator+' '+ timesel+" -cat '" + list_to_string(run_files) + "' "+ run_whole
 		else:
-			cdo_cmd = "cdo yseas"+operator+' -seasmean ' + timesel+" -cat '" + list_to_string(run_files) + "' "+ run_whole
+			cdo_cmd = "cdo -L selvar,"+var+" -yseas"+operator+' -seasmean ' + timesel+" -cat '" + list_to_string(run_files) + "' "+ run_whole
 		print cdo_cmd
 		os.system(cdo_cmd)
 
@@ -54,14 +54,27 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 	op_ensstd=['']*len(operators)
 	run_averages = ''
 	run_averages_op = ['']*len(operators)
+
+	# Timespans start from March and end in November, as we don't have all of the first, last djf seasons
+	timespan = {'All-Hist':'2006-03-01,2015-11-30','Plus15-Future':'2106-03-01,2115-11-30', 'Plus20-Future':'2106-03-01,2115-11-30','historical':'2006-03-01,2015-11-30','1pt5degC':'2091-03-01,2100-11-30','2pt0degC':'2091-03-01,2100-11-30'}
+	try:
+		timesel = timespan[experiment]
+		if model == 'HadAM3P' and ( experiment == 'Plus15-Future' or experiment == 'Plus20-Future'):
+			timesel = '2090-03-01,2099-11-30'
+		timesel = ' -seldate,'+timesel+' '
+		#if model == 'CESM-CAM5':
+	except Exception,e: # if experiment isn't in the timespan dictionary (e.g. CESM-CAM5 model)
+		raise Exception('error choosing time spans '+str(e))
+
+
 	try:		
 		print model,experiment,var
-		clim_ensmean = outdir+model+'.'+var+'.'+experiment+'_seasclim_ensmean.nc'
-		clim_ensstd = outdir+model+'.'+var+'.'+experiment+'_seasclim_ensstd.nc'
+		clim_ensmean = os.path.join(outdir,'seas_ensmean',model+'.'+var+'.'+experiment+'_seasclim_ensmean.nc')
+		clim_ensstd = os.path.join(outdir,'seas_ensmean',model+'.'+var+'.'+experiment+'_seasclim_ensstd.nc')
 		for i,op in enumerate(operators):
 			opname = op.replace(',','')
-			op_ensmean[i] = outdir+model+'.'+var+'.'+experiment+'_seas'+opname+'_ensmean.nc'
-			op_ensstd[i] = outdir+model+'.'+var+'.'+experiment+'_seas'+opname+'_ensstd.nc'
+			op_ensmean[i] = os.path.join(outdir,'seas_ensmean',model+'.'+var+'.'+experiment+'_seas'+opname+'_ensmean.nc')
+			op_ensstd[i] = os.path.join(outdir,'seas_ensmean',model+'.'+var+'.'+experiment+'_seas'+opname+'_ensstd.nc')
 
 	#	if os.path.exists(clim_ensmean) and os.path.exists(clim_ensstd):
 	#		print 'files already exist, skipping'
@@ -72,6 +85,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 
 		# Get list of runs
 		runs = get_runs(model,experiment,basepath,data_freq,var)
+		#print 'runs',runs
 
 		outpath_runs=os.path.join(outdir,'seas_data',model,experiment,var)
 		if not os.path.exists(outpath_runs):
@@ -84,7 +98,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 			run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+var+'_'+run+'_seas.nc')
 			# Add the process to the pool
 			if not os.path.exists(run_whole):
-				pool.apply_async(process_run,(runpath,run_whole))
+				pool.apply_async(process_run,(runpath,run_whole,timesel))
 			# Add this run to list
 			run_averages += run_whole +' '
 
@@ -122,7 +136,7 @@ def process_data(model,experiment,var,basepath,numthreads,data_freq):
 					run_whole_op = runname_start+opname+'.nc'
 
 				if not os.path.exists(run_whole_op.split(' ')[-1]):
-					pool.apply_async(process_run,(runpath,run_whole_op),{'operator':op})
+					pool.apply_async(process_run,(runpath,run_whole_op,timesel),{'operator':op})
 				run_averages_op[i] += run_whole_op +' '
 
 			# close the pool and make sure the processing has finished
@@ -168,7 +182,7 @@ if __name__=='__main__':
 	elif host == 'anthropocene.ggy.bris.ac.uk':
 		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed/'
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		numthreads = 16
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
@@ -177,11 +191,9 @@ if __name__=='__main__':
 	data_freq = {'pr':'mon','tas':'mon','ua':'mon','va':'mon'}
 
 	# PROCESS CESM low warming
-#	models = ['CESM-CAM5']
 	# override defaults
-#	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data/'
-#	experiments = ['historical','1pt5degC','2pt0degC']
-#	outdir = '/export/silurian/array-01/pu17449/seas_data_CESM/'
+	#models = ['CESM-CAM5']
+	#basepath = '/export/anthropocene/array-01/pu17449/cesm_data/decade_data_v2/'
 
 	for model in models:
 		if model == 'CESM-CAM5':

@@ -11,12 +11,18 @@ def miroc_histruns(basepath,model,experiment,var,data_freq):
 	for run in range(111,161):
 		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
 	return runs
-	
-# Just take v2 of miroc
-def miroc_15runs(basepath,model,experiment,var,data_freq):
-	runpath = basepath+model+'/'+experiment+ '/*/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3)
-	return glob.glob(runpath)
 
+######################################################################
+
+# Choose runs 1-50 and 101-160 for MIROC Hist (including bc runs, but not runs startin gin 2010
+def miroc_histruns_all(basepath,model,experiment,var,data_freq):
+	runs = []
+	for run in range(1,51):
+		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
+	for run in range(101,161):
+		runs.append(basepath+model+'/'+experiment+ '/est1/v2-0/'+data_freq+'/atmos/'+ var+'/run'+str(run).zfill(3))
+	return runs
+	
 ######################################################################
 
 # Choose runs 1-125 for NorESM1-HAPPI Hist
@@ -38,6 +44,7 @@ def CESM_runs(basepath,experiment,data_freq,var):
 	print 'getting runs for CESM'
 #	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
 	runpath = os.path.join(basepath,experiment,data_freq,var,'run*')
+	#print runpath
 	return glob.glob(runpath)
 
 ######################################################################
@@ -82,15 +89,79 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 		version = 'v2-0'
 	elif model == 'NorESM1-HAPPI' and experiment[:4]=='Plus':
 		#use version 2 for NorESM future runs 
-		version = 'v1-0'
+		version = 'v2-0'
 	elif model == 'HadAM3P':
 		# Use version v1-2 for HadAM3P 
 		# (the data should be the same, but this was reprocessed with renamed dimensions)
 		version = 'v1-2' 
-		
+
+	# set est (estimate) if necessary
+	est = '*'
+	if model == 'CanAM4' and experiment == 'All-Hist':
+		est = 'est1' # Use est2 for bias correction runs
+
+
 	# Get list of paths that match our filename pattern
 	if run_pattern:
-		pathpattern=basepath+model+'/'+experiment+ '/*/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
+		pathpattern=basepath+model+'/'+experiment+ '/'+est+'/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
+		print pathpattern
+		runs = glob.glob(pathpattern)
+	return runs
+
+######################################################################
+
+# Get list of runs for a particular model, experiment, variable
+# This gets all of the runs, including bias correction and standard short runs
+def get_runs_all(model,experiment,basepath,data_freq,var,domain='atmos'):
+	run_pattern = None
+	if model =='CESM' or model == 'CESM-CAM5':
+		return CESM_runs(basepath,experiment,data_freq,var)
+	elif model=='MIROC5' and experiment=='All-Hist':
+		# choose specific runs
+		return miroc_histruns_all(basepath,model,experiment,var,data_freq)
+	elif model=='CAM4-2degree':
+		run_pattern = 'ens*'
+	elif model=='CanAM4':
+		run_pattern = 'r*i1p1'
+	elif model == 'CMIP5':
+		return CMIP5_runs(basepath,experiment,data_freq,var)
+	else: 
+	#Default
+	# model=='MIROC5' or model=='NorESM1-HAPPI' or model=='HadAM3P' or model=='CAM5-1-2-025degree': 
+		run_pattern = 'run*'
+
+	# Set version if necessary:
+	version = '*'
+	if model == 'CAM5-1-2-025degree' and experiment == 'All-Hist':
+		#Choose runs from v1-0 (not v1-0-aero) for CAM5-1-2-025 Hist
+		version = 'v1-0'
+	elif model == 'CAM4-2degree' and experiment[:4]=='Plus':
+		# Choose version v2-0 for CAM4 future runs
+		version = 'v2-0'
+#	elif model == 'ECHAM6-3-LR' and experiment == 'All-Hist':
+#		version = 'v1-0' # version 1 is short runs, version 1-1 is bias correction runs
+	elif model == 'MIROC5' and experiment == 'Plus15-Future':
+		# Incorrect data was replaced with v3-0
+		version = 'v3-0'
+	elif model == 'MIROC5' and experiment == 'Plus20-Future':
+		# Just use v2-0, not additional 'Land' experiments
+		version = 'v2-0'
+	elif model == 'NorESM1-HAPPI' and experiment[:4]=='Plus':
+		#use version 2 for NorESM future runs 
+		version = 'v2-0'
+	elif model == 'HadAM3P':
+		# Use version v1-2 for HadAM3P 
+		# (the data should be the same, but this was reprocessed with renamed dimensions)
+		version = 'v1-2' 
+
+	# set est (estimate) if necessary
+	est = '*'
+	if model == 'CanAM4' and experiment == 'All-Hist':
+		est = 'est1' # Use est2 for bias correction runs
+
+	# Get list of paths that match our filename pattern
+	if run_pattern:
+		pathpattern=basepath+model+'/'+experiment+ '/'+est+'/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
 		print pathpattern
 		runs = glob.glob(pathpattern)
 	return runs
@@ -117,7 +188,7 @@ def norESM_bcruns(basepath,model,experiment,var,data_freq,domain):
 ######################################################################
 
 # Get list of BIAS CORRECTION runs for a particular model, variable
-def get_bc_runs(model,basepath,data_freq,var,domain='atmos'):
+def get_bc_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 	experiment = 'All-Hist'
 	run_pattern = None
 	if model =='CESM' or model == 'CESM-CAM5':

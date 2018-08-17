@@ -23,6 +23,6 @@ for fin in glob.glob(inpattern):
 		# optionally select variable (needed if multiple variables are in the input file)
 		#cmd = 'cdo remapcon2,/export/silurian/array-01/pu17449/mygrid -selvar,'+var+' '+fin +' '+fout
 		#cmd = 'cdo remapbil,'+gridspec+' -selvar,'+var+' '+fin +' '+fout
-		cmd = 'cdo remapbil,'+gridspec+' '+fin +' '+fout
+		cmd = 'cdo remapcon,'+gridspec+' '+fin +' '+fout
 		print cmd
 		os.system('time '+cmd)
