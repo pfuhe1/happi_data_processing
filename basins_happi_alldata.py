@@ -7,14 +7,15 @@ import numpy as np
 from netCDF4 import Dataset,MFDataset
 
 # Stuff to load masks
-sys.path.append('/home/bridge/pu17449/src/happi_analysis/river_basins')
+home = os.environ.get('HOME')
+
+# Stuff to load masks
+sys.path.append(os.path.join(home,'src/happi_analysis/river_basins'))
 from create_mask import create_mask,load_polygons
 
-# Stuff to load runs
-sys.path.append('/home/bridge/pu17449/src/happi_data_processing')
+# load other data processing scripts 
+sys.path.append(os.path.join(home,'src/happi_data_processing'))
 from get_runs import get_runs,get_bc_runs
-
-sys.path.append('/home/bridge/pu17449/src/python_tutorial_v1.1')
 from globalmean import calc_globalmean
 
 
