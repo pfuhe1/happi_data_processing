@@ -187,8 +187,8 @@ if __name__=='__main__':
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 	#varlist = ['pr','tas']
-	varlist = ['ua','va']
-	data_freq = {'pr':'mon','tas':'mon','ua':'mon','va':'mon'}
+	varlist = ['ua','va','wap']
+	data_freq = {'pr':'mon','tas':'mon','ua':'mon','va':'mon','wap':'mon'}
 
 	# PROCESS CESM low warming
 	# override defaults

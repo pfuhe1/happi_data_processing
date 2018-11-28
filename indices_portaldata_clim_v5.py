@@ -8,6 +8,7 @@ import multiprocessing
 from get_runs import get_runs_all
 from netCDF4 import MFDataset,Dataset
 import numpy as np
+import subprocess
 
 # Create list into a string
 def list_to_string(l):
@@ -214,19 +215,21 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 	elif len(run_files)==1:
 		# Only one file, calculate RXx5day (annual 5 day max)
 		# CDO command
-		cdo_cmd = "cdo -L yearmax -runmean,5 " + timesel + run_files[0] + " " + run_whole[:-3]+'_yrly.nc'
+		#cdo_cmd = ["cdo","-L","yearmax","-runmean,5",timesel,run_files[0],run_whole[:-3]+'_yrly.nc']#
+		cdo_cmd = "cdo -L yearmax -runmean,5 " + timesel + run_files[0] + " " + run_whole[:-3]+"_yrly.nc"
 		print cdo_cmd
-		os.system(cdo_cmd)
+		cdo_ret = subprocess.call(cdo_cmd,shell=True)
 	else: 
 		# calculate RXx5day (annual 5 day max) and concatenate files
 		# CDO command
-		cdo_cmd = "cdo -L yearmax -runmean,5  "+ timesel + " -cat '" +list_to_string(run_files) + "' " + run_whole[:-3]+'_yrly.nc'
+		cdo_cmd = ["cdo","-L","yearmax","-runmean,5 ",timesel,"-cat",list_to_string(run_files), run_whole[:-3]+'_yrly.nc']
 		print cdo_cmd
-		os.system(cdo_cmd)
+		cdo_ret = subprocess.call(cdo_cmd)
 
-	cdo_cmd2 = "cdo timmean "+run_whole[:-3]+'_yrly.nc' + ' ' + run_whole
-	print cdo_cmd2
-	cdo_ret = os.system(cdo_cmd2)
+	if cdo_ret == 0: # First call was successful
+		cdo_cmd2 = ["cdo","timmean",run_whole[:-3]+'_yrly.nc',run_whole]
+		print cdo_cmd2
+		cdo_ret = subprocess.call(cdo_cmd2)
 	return cdo_ret
 
 # Process all the data for the particular model, experiment and variable
@@ -235,7 +238,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 	timespan = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
 	try:
 		timesel = timespan[experiment]
-		if model == 'HadAM3P' and ( experiment == 'Plus15-Future' or experiment == 'Plus20-Future'):
+		if (model == 'HadAM3P' or model=='HadRM3P-SAS50') and ( experiment == 'Plus15-Future' or experiment == 'Plus20-Future'):
 			timesel = '2090-01-01,2099-12-31'
 		timesel = ' -seldate,'+timesel+' '
 		#if model == 'CESM-CAM5':
@@ -280,7 +283,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 
 
 		# Loop over runs
-		run_averages = ''
+		run_averages = []
 		cmd_ret = {}
 		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
 		for runpath in runs:
@@ -298,27 +301,27 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 				#process(runpath,run_whole)
 			else: # file was previously created
 				# Add this run to list
-				run_averages += run_whole +' '
+				run_averages.append(run_whole)
 
 		# close the pool and make sure the processing has finished
 		pool.close()
 		pool.join()
-
+		print run_averages
 		# Loop through runs and add to list of successful output files		
 		for run_whole,result in cmd_ret.iteritems():
 			retcode = result.get(timeout=600.)
 			if retcode == 0 and os.path.exists(run_whole): # if the file was produced successfully
-				run_averages += run_whole +' '
+				run_averages.append(run_whole)
 
 		# Ensemble mean
-		cdo_cmd = 'cdo ensmean ' + run_averages + outmean
+		cdo_cmd = ['cdo','ensmean']+run_averages + [outmean]
 		print cdo_cmd
-		os.system(cdo_cmd)
+		subprocess.call(cdo_cmd)
 
 		# Ensemble stdev
-		cdo_cmd = 'cdo ensstd ' + run_averages + outstd
+		cdo_cmd = ['cdo','ensstd'] + run_averages + [outstd]
 		print cdo_cmd
-		os.system(cdo_cmd)
+		subprocess.call(cdo_cmd)
 
 	except Exception,e:
 		print 'Error in script: '

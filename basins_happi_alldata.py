@@ -31,8 +31,12 @@ def load_basin_data_weighted(runpath,model,experiment,var,basin_masks,lat):
 	basin_timeseries = {}
 	if os.path.isdir(runpath):
 		run_files=glob.glob(runpath+'/*.nc')
+		with MFDataset(run_files,'r') as f_in:
+			data = f_in.variables[var][:].squeeze()*86400
 	else:
 		run_files = runpath
+		with Dataset(run_files,'r') as f_in:
+			data = f_in.variables[var][:].squeeze()*86400
 	
 	print run_files
 	
@@ -41,14 +45,12 @@ def load_basin_data_weighted(runpath,model,experiment,var,basin_masks,lat):
 	#if model == 'MIROC5':# and (experiment=='All-Hist' or experiment == 'Plus20-Future'):
 	#	run_files = run_files[:-1]
 
-	# Load data from file into data_all array
-	with MFDataset(run_files,'r') as f_in:
-		data = f_in.variables[var][:].squeeze()*86400
 	shp = data.shape
 	for bname,basin in basin_masks.iteritems():
 		
 		# Apply basin mask to array (broadcast over time dimension)
 		masked_data = np.ma.masked_array(*np.broadcast_arrays(data,basin))
+		
 		# Debug to check mask
 		#plt.figure()
 		#plt.title('mask '+model)
@@ -59,6 +61,7 @@ def load_basin_data_weighted(runpath,model,experiment,var,basin_masks,lat):
 		#	basin_timeseries[bname] = masked_data.mean(0).mean(0)
 		#else:
 		basin_timeseries[bname] = calc_globalmean(masked_data,lat)
+		print basin_timeseries[bname].shape
 
 	return basin_timeseries
 
@@ -177,12 +180,15 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		print 'finalising data'
 		for basin in masks.keys():
 			outshape0 = len(data_all[basin])
-			outshape1 = len(data_all[basin][3]) # Hack to work for CAM5, TODO change to maximum of these values (or just 10)
+			#outshape1 = len(data_all[basin][3]) # Hack to work for CAM5, TODO change to maximum of these values (or just 10)
+			outshape1 = 21 #Hack for CMIP5
 			outarr = np.ma.zeros([outshape0,outshape1])
 			for i,ens in enumerate(data_all[basin]):
 				#print 'ens',i,len(data_all[basin][i])
-				outarr[i,:len(ens)]=ens
-				outarr[i,len(ens):]=np.ma.masked # mask away parts allocated for shorter enembles
+				iend = min(21,len(ens))
+				#print iend
+				outarr[i,:iend]=ens[:iend]
+				outarr[i,iend:]=np.ma.masked # mask away parts allocated for shorter enembles
 			data_all[basin] = outarr
 
 		print len(data_all[basin])#,len(data_all[basin][0])#,len(data_all[basin][1]),len(data_all[basin][2]),len(data_all[basin][3]),len(data_all[basin][4]),len(data_all[basin][5]),

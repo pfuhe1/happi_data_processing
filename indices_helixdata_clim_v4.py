@@ -4,6 +4,7 @@
 # 
 import os,glob,tempfile,shutil,socket
 from threading import Thread
+import subprocess
 import multiprocessing
 from get_runs import get_runs_all
 from netCDF4 import MFDataset,Dataset
@@ -220,14 +221,16 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 	else: 
 		# calculate RXx5day (annual 5 day max) and concatenate files
 		# CDO command
-		cdo_cmd = "cdo -L yearmax -runmean,5  "+ timesel + " -cat '" +list_to_string(run_files) + "' " + run_whole[:-3]+'_yrly.nc'
+		##cdo_cmd = "cdo -L yearmax -runmean,5  "+ timesel + " -cat '" +list_to_string(run_files) + "' " + run_whole[:-3]+'_yrly.nc'
+		cdo_cmd = ['cdo','-L','yearmax','-runmean,5','-cat',list_to_string(run_files)[:-1],run_whole[:-3]+'_yrly.nc']
+		cdo_cmd = ['cdo','-L','yearmax','-runmean,5','-cat']+run_files+[run_whole[:-3]+'_yrly.nc']
 		print cdo_cmd
-		os.system(cdo_cmd)
+		#os.system(cdo_cmd)
+		subprocess.call(cdo_cmd)
 
 	cdo_cmd2 = "cdo timmean "+run_whole[:-3]+'_yrly.nc' + ' ' + run_whole
 	print cdo_cmd2
-	cdo_ret = os.system(cdo_cmd2)
-	return cdo_ret
+	os.system(cdo_cmd2)
 
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos'):
@@ -281,7 +284,6 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 
 		# Loop over runs
 		run_averages = ''
-		cmd_ret = {}
 		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
 		for runpath in runs:
 			run = os.path.basename(runpath)
@@ -294,21 +296,14 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			# Only process if it doesn't exist
 			if not os.path.exists(run_whole):
 				#raise Exception('Debug, not processing runs')
-				cmd_ret[run_whole] = pool.apply_async(process,(runpath,run_whole,unit_conv,timesel))
+				pool.apply_async(process,(runpath,run_whole,unit_conv,timesel))
 				#process(runpath,run_whole)
-			else: # file was previously created
-				# Add this run to list
-				run_averages += run_whole +' '
+			# Add this run to list
+			run_averages += run_whole +' '
 
 		# close the pool and make sure the processing has finished
 		pool.close()
-		pool.join()
-
-		# Loop through runs and add to list of successful output files		
-		for run_whole,result in cmd_ret.iteritems():
-			retcode = result.get(timeout=600.)
-			if retcode == 0 and os.path.exists(run_whole): # if the file was produced successfully
-				run_averages += run_whole +' '
+		pool.join()		
 
 		# Ensemble mean
 		cdo_cmd = 'cdo ensmean ' + run_averages + outmean
@@ -350,18 +345,21 @@ if __name__=='__main__':
 		numthreads = 2	
 		outdir = '/data/scratch/pu17449/processed_data/'
 	elif host =='anthropocene.ggy.bris.ac.uk':
-		#basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
-		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
-		
-		basepath = '/export/anthropocene/array-01/pu17449/happi_data_extra/'
-		models = ['HadRM3P-SAS50']
-		
+		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
+		#models = ['NorESM1-HAPPI','CAM4-2degree','HadAM3P']
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 4
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
+	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+		basepath = '/work/scratch/pfu599/helix_data/SWL_data/'
+		outdir = '/work/scratch/pfu599/helix_data/processed_data/'
+		numthreads = 2
+		models = ['ec-earth3-hr','hadgem3']
+		
 
 
-	experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
+	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 	#var = 'mrro'
 	#domain = 'land'
 	
@@ -374,7 +372,7 @@ if __name__=='__main__':
 	
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
 	indices = ['RXx5day']
-	data_freq = 'day'
+	data_freq = 'day'	
 
 
 	# PROCESS CESM low warming
@@ -385,9 +383,9 @@ if __name__=='__main__':
 #	unit_conv = 86400.*1000 # Note, not needed for runoff
 
 	# PROCESS CMIP5 slices
-	#models = ['CMIP5']
-	#experiments = ['historical','slice15','slice20']
-	#basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily_regrid'
+#	models = ['CMIP5']
+#	experiments = ['historical','slice15','slice20']
+#	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily_regrid'
 #	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily_regrid/'
 #	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
 #	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'

@@ -99,6 +99,8 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 	est = '*'
 	if model == 'CanAM4' and experiment == 'All-Hist':
 		est = 'est1' # Use est2 for bias correction runs
+	elif model == 'HadAM3P' or model=='HadAM3P-EU25' or model=='HadRM3P-SAS50':
+		est = 'est1' # Use est2 for bias correction runs
 
 
 	# Get list of paths that match our filename pattern
@@ -158,6 +160,8 @@ def get_runs_all(model,experiment,basepath,data_freq,var,domain='atmos'):
 	est = '*'
 	if model == 'CanAM4' and experiment == 'All-Hist':
 		est = 'est1' # Use est2 for bias correction runs
+	elif model == 'HadAM3P' or model=='HadAM3P-EU25' or model=='HadRM3P-SAS50':
+		est = 'est1' # Don't use bias correction runs for now
 
 	# Get list of paths that match our filename pattern
 	if run_pattern:
@@ -224,7 +228,7 @@ def get_bc_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 
 	# set est (estimate) if necessary
 	est = '*'
-	if model == 'HadAM3P' or model=='HadAM3P-EU25':
+	if model == 'HadAM3P' or model=='HadAM3P-EU25' or model=='HadRM3p-SAS50':
 		est = 'est2' # Use est2 for bias correction runs
 # NOTE: for CanAM4 est2 actually points to amip runs from CMIP5 as there aren't any bias correction runs specifically for HAPPI
 	if model =='CanAM4':
