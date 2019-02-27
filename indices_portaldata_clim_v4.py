@@ -360,7 +360,7 @@ if __name__=='__main__':
 
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
-	timespans = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
+	timespan = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
 
 	#var = 'mrro'
 	#domain = 'land'
@@ -401,7 +401,7 @@ if __name__=='__main__':
 				timesel = timespan[experiment]
 				if model == 'HadAM3P' and ( experiment == 'Plus15-Future' or experiment == 'Plus20-Future'):
 					timesel = '2090-01-01,2099-12-31'
-				timesel = [-seldate,'+timesel]
+				timesel = ['-seldate,'+timesel]
 			except: # if experiment isn't in the timespan dictionary (e.g. CESM-CAM5 model)
 				timesel = []
 			for index in indices:
