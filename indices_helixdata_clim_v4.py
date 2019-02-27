@@ -215,7 +215,7 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 	elif len(run_files)==1:
 		# Only one file, calculate RXx5day (annual 5 day max)
 		# CDO command
-		cdo_cmd = "cdo -L yearmax -runmean,5 " + timesel + run_files[0] + " " + run_whole[:-3]+'_yrly.nc'
+		cdo_cmd = "cdo -L yearmax -runmean,5 " + run_files[0] + " " + run_whole[:-3]+'_yrly.nc'
 		print cdo_cmd
 		os.system(cdo_cmd)
 	else: 
@@ -223,7 +223,7 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 		# CDO command
 		##cdo_cmd = "cdo -L yearmax -runmean,5  "+ timesel + " -cat '" +list_to_string(run_files) + "' " + run_whole[:-3]+'_yrly.nc'
 		cdo_cmd = ['cdo','-L','yearmax','-runmean,5','-cat',list_to_string(run_files)[:-1],run_whole[:-3]+'_yrly.nc']
-		cdo_cmd = ['cdo','-L','yearmax','-runmean,5','-cat']+run_files+[run_whole[:-3]+'_yrly.nc']
+		#cdo_cmd = ['cdo','-L','yearmax','-runmean,5','-cat']+run_files+[run_whole[:-3]+'_yrly.nc']
 		print cdo_cmd
 		#os.system(cdo_cmd)
 		subprocess.call(cdo_cmd)
@@ -354,8 +354,9 @@ if __name__=='__main__':
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		basepath = '/work/scratch/pfu599/helix_data/SWL_data/'
 		outdir = '/work/scratch/pfu599/helix_data/processed_data/'
-		numthreads = 2
-		models = ['ec-earth3-hr','hadgem3']
+		numthreads = 8
+		# NOTE: lowercase models are bias corrected, upper case are raw model data
+		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 		
 
 

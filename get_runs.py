@@ -62,7 +62,7 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 		return norESM_histruns(basepath,model,experiment,var,data_freq,domain)
 	elif model=='CAM4-2degree':
 		run_pattern = 'ens0*'
-	elif model=='CanAM4':
+	elif model=='CanAM4' or model=='ec-earth3-hr' or model == 'hadgem3':
 		run_pattern = 'r*i1p1'
 	elif model == 'CMIP5':
 		return CMIP5_runs(basepath,experiment,data_freq,var)
@@ -123,7 +123,7 @@ def get_runs_all(model,experiment,basepath,data_freq,var,domain='atmos'):
 		return miroc_histruns_all(basepath,model,experiment,var,data_freq)
 	elif model=='CAM4-2degree':
 		run_pattern = 'ens*'
-	elif model=='CanAM4':
+	elif model=='CanAM4' or model.lower()=='ec-earth3-hr' or model.lower() == 'hadgem3':	
 		run_pattern = 'r*i1p1'
 	elif model == 'CMIP5':
 		return CMIP5_runs(basepath,experiment,data_freq,var)

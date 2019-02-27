@@ -29,22 +29,15 @@ def list_to_string(l):
 def load_basin_data_weighted(runpath,model,experiment,var,basin_masks,lat):
 	print runpath
 	basin_timeseries = {}
+	# Load data from file into data array
 	if os.path.isdir(runpath):
 		run_files=glob.glob(runpath+'/*.nc')
 		with MFDataset(run_files,'r') as f_in:
 			data = f_in.variables[var][:].squeeze()*86400
 	else:
-		run_files = runpath
-		with Dataset(run_files,'r') as f_in:
+		with Dataset(runpath,'r') as f_in:
 			data = f_in.variables[var][:].squeeze()*86400
 	
-	print run_files
-	
-	# Hack for issues with last year of MIROC data (11 years)
-	# Note: this works for raw data files, but not for indices!
-	#if model == 'MIROC5':# and (experiment=='All-Hist' or experiment == 'Plus20-Future'):
-	#	run_files = run_files[:-1]
-
 	shp = data.shape
 	for bname,basin in basin_masks.iteritems():
 		
@@ -124,7 +117,7 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 			f_template = glob.glob(runs[0]+'/*.nc')[0]
 		else:
 			f_template = runs[0]
-		#print f_template
+		print 'reading grid from',f_template
 		with Dataset(f_template,'r') as tmp:
 			try:
 				lat = tmp.variables['lat'][:]
@@ -132,15 +125,16 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 			except:
 				lat = tmp.variables['latitude0'][:]
 				lon = tmp.variables['longitude0'][:]
-		# Create 2D arrays of lon and lat
-		nlat = len(lat)
-		nlon = len(lon)
-		lonxx,latyy=np.meshgrid(lon,lat)
-		lonxx[lonxx>180]=lonxx[lonxx>180]-360
-		points = np.vstack((lonxx.flatten(),latyy.flatten())).T
+		if masks is  None:
+			print 'calculating 2D lat/lon arrays'
+			# Create 2D arrays of lon and lat
+			nlat = len(lat)
+			nlon = len(lon)
+			lonxx,latyy=np.meshgrid(lon,lat)
+			lonxx[lonxx>180]=lonxx[lonxx>180]-360
+			points = np.vstack((lonxx.flatten(),latyy.flatten())).T
 		
-		# Load basin masks
-		if masks == None:
+			# Load basin masks
 			masks = {}
 			print 'loading basin masks...'
 			for basin_file in glob.glob('/home/bridge/pu17449/src/happi_analysis/river_basins/basin_files/*.txt'):
