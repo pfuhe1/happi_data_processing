@@ -3,7 +3,7 @@
 # Version 4 to only select 10 years (a few runs are longer)
 # 
 import os,glob,tempfile,shutil,socket
-from threading import Thread
+import subprocess
 import multiprocessing
 from get_runs import get_runs_all
 from netCDF4 import MFDataset,Dataset
@@ -214,33 +214,23 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 	elif len(run_files)==1:
 		# Only one file, calculate RXx5day (annual 5 day max)
 		# CDO command
-		cdo_cmd = "cdo -L yearmax -runmean,5 " + timesel + run_files[0] + " " + run_whole[:-3]+'_yrly.nc'
+		cdo_cmd = ["cdo","-L","yearmax","-runmean,5"]+timesel+[run_files[0],run_whole[:-3]+'_yrly.nc']
 		print cdo_cmd
-		os.system(cdo_cmd)
+		subprocess.call(cdo_cmd)
 	else: 
 		# calculate RXx5day (annual 5 day max) and concatenate files
 		# CDO command
-		cdo_cmd = "cdo -L yearmax -runmean,5  "+ timesel + " -cat '" +list_to_string(run_files) + "' " + run_whole[:-3]+'_yrly.nc'
+		cdo_cmd = ['cdo','-L','yearmax','-runmean,5']+timesel+['-cat',list_to_string(run_files)[:-1],run_whole[:-3]+'_yrly.nc']
 		print cdo_cmd
-		os.system(cdo_cmd)
+		subprocess.call(cdo_cmd)
 
-	cdo_cmd2 = "cdo timmean "+run_whole[:-3]+'_yrly.nc' + ' ' + run_whole
+	cdo_cmd2 = ['cdo','timmean',run_whole[:-3]+'_yrly.nc',run_whole]
 	print cdo_cmd2
-	cdo_ret = os.system(cdo_cmd2)
+	cdo_ret = subprocess.call(cdo_cmd2)
 	return cdo_ret
 
 # Process all the data for the particular model, experiment and variable
-def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos'):
-
-	timespan = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
-	try:
-		timesel = timespan[experiment]
-		if model == 'HadAM3P' and ( experiment == 'Plus15-Future' or experiment == 'Plus20-Future'):
-			timesel = '2090-01-01,2099-12-31'
-		timesel = ' -seldate,'+timesel+' '
-		#if model == 'CESM-CAM5':
-	except: # if experiment isn't in the timespan dictionary (e.g. CESM-CAM5 model)
-		timesel = ' ' 
+def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos',timesel=[]):
 
 	try:		
 	
@@ -350,18 +340,28 @@ if __name__=='__main__':
 		numthreads = 2	
 		outdir = '/data/scratch/pu17449/processed_data/'
 	elif host =='anthropocene.ggy.bris.ac.uk':
-		#basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
-		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
+		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		
-		basepath = '/export/anthropocene/array-01/pu17449/happi_data_extra/'
-		models = ['HadRM3P-SAS50']
+		#basepath = '/export/anthropocene/array-01/pu17449/happi_data_extra/'
+		#models = ['HadRM3P-SAS50']
 		
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 4
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
+	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+		basepath = '/work/scratch/pfu599/helix_data/SWL_data/'
+		outdir = '/work/scratch/pfu599/helix_data/processed_data/'
+		numthreads = 8
+		# NOTE: lowercase models are bias corrected, upper case are raw model data
+		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
+		experiments = ['historical','slice15','slice20']
+		
 
 
 	experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
+	timespans = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
+
 	#var = 'mrro'
 	#domain = 'land'
 	
@@ -385,9 +385,9 @@ if __name__=='__main__':
 #	unit_conv = 86400.*1000 # Note, not needed for runoff
 
 	# PROCESS CMIP5 slices
-	#models = ['CMIP5']
-	#experiments = ['historical','slice15','slice20']
-	#basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily_regrid'
+#	models = ['CMIP5']
+#	experiments = ['historical','slice15','slice20']
+#	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily_regrid'
 #	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily_regrid/'
 #	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
 #	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'
@@ -395,10 +395,16 @@ if __name__=='__main__':
 
 	for model in models:
 		for experiment in experiments:
+			# Set (optional) timesel (to select only decade of interest for HAPPI runs
+			# Note, for other methods, time slices are already calculated
+			try:
+				timesel = timespan[experiment]
+				if model == 'HadAM3P' and ( experiment == 'Plus15-Future' or experiment == 'Plus20-Future'):
+					timesel = '2090-01-01,2099-12-31'
+				timesel = [-seldate,'+timesel]
+			except: # if experiment isn't in the timespan dictionary (e.g. CESM-CAM5 model)
+				timesel = []
 			for index in indices:
 				# Call process_data for this model, experiment and variable
-				process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq=data_freq,domain=domain)
-				# Simple Multithreading to call process_data in separate threads
-	#			t = Thread(target = process_data, args=(model,experiment,var,basepath))
-	#			t.start()
+				process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq=data_freq,domain=domain,timesel=timesel)
 
