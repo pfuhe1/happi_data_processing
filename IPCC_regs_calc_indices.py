@@ -110,7 +110,7 @@ if __name__=='__main__':
 		# Set experiments
 		if model =='CESM-CAM5':
 			experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
-		elif model == 'CMIP5' or model == 'CanESM2':
+		elif model == 'CMIP5' or or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 			experiments = ['historical','slice15','slice20']
 		else:
 			experiments = ['All-Hist','Plus15-Future','Plus20-Future']
