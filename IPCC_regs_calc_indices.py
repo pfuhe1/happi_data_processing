@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# Script to calculate the regional average of RXx5day, based on shapefile polygons
+# Script to calculate the regional average of a variable/index
+# region based on shapefile polygons
 # Saves data to a pickle file
 #
 # Peter Uhe
@@ -12,6 +13,8 @@ import pickle
 from netCDF4 import Dataset
 
 home = os.environ.get('HOME')
+argv = sys.argv
+
 # Stuff to load masks
 sys.path.append(os.path.join(home,'src/create_masks'))
 from create_mask import load_shapefile_attrs
@@ -24,13 +27,14 @@ from basins_happi_alldata import get_basindata,create_mask
 if __name__=='__main__':
 
 	#######################################
-	# Variables to set
+	# Variables to set 
 
 	data_freq = 'N/A'
 	var = 'pr'
-	#index = 'RXx5day'
-	index = 'pryrmean'
-
+	if len(argv)>1:
+		index = argv[1].strip()
+	else:
+		index = 'RXx5day'
 	
 	#######################################
 	# 	Paths/Variables  dependent on host/machine
@@ -70,12 +74,11 @@ if __name__=='__main__':
 		shapefile = '/home/users/pfu599/shapefiles/referenceRegions.shp'
 		landmask_dir = '/home/users/pfu599/helix_landfrac'
 		basepath = '/work/scratch/pfu599/helix_data/processed_data/'
-		data_pkl = '/home/users/pfu599/pkl/RXx5day_IPCCregs.pkl'
+		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
 		mask_pkl = '/home/users/pfu599/pkl/IPCCreg_masks.pkl'
 		numthreads = 8
 		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
-		
-
+	
 	#######################################
 	# load pickle files
 

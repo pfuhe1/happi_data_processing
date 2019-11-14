@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# Script to load RXx5day data for the IPCC regions
+# Script to load climate indices data for the IPCC regions
 #
 # 1. Loads a pickle file containing region data
-# Input data should be first calculated by running IPCC_regs_calc_RXx5day.py script
+# Input data should be first calculated by running IPCC_regs_calc_indices.py script
 #
 # 2. Computes sampling uncertainty ranges for each model/region and saves to a new pkl file
 #
@@ -14,38 +14,42 @@ import pickle
 import glob,os,socket,sys
 
 home = os.environ.get('HOME')
+argv = sys.argv
 
 # Import bootstrapping routine
 sys.path.append(os.path.join(home,'src/happi_analysis/HAPPI_plots'))
 from bootstrapping import bootstrap_mean_diff
 
 if __name__=='__main__':
-	
-	#######################################
-	# 	Paths/Variables  dependent on host/machine
-
-	host=socket.gethostname()
-	if host=='anthropocene.ggy.bris.ac.uk':
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_data3.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_summary3.pkl'
-		#models = ['CMIP5','CESM-CAM5']
-		models = ['CanESM2','CanAM4']
-		numthreads = 12
-	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
-		data_pkl = '/home/users/pfu599/pkl/RXx5day_IPCCregs.pkl'
-		summary_pkl = '/home/users/pfu599/pkl/RXx5day_IPCCregs_helixmodels_summary.pkl'
-		numthreads = 8
-		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 
 	#######################################
 	# Variables to set
 
 	data_freq = 'N/A'
 	var = 'pr'
-	index = 'RXx5day'
-
+	if len(argv)>1:
+		index = argv[1].strip()
+	else:
+		index = 'RXx5day'
 	scenarios = ['1.5$^{\circ}$C - Hist','2$^{\circ}$C - Hist','2$^{\circ}$C - 1.5$^{\circ}$C']
+
 	
+	#######################################
+	# 	Paths/Variables  dependent on host/machine
+
+	host=socket.gethostname()
+	if host=='anthropocene.ggy.bris.ac.uk':
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
+		#models = ['CMIP5','CESM-CAM5']
+		models = ['CanESM2','CanAM4']
+		numthreads = 12
+	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_helixmodels_summary.pkl'
+		numthreads = 8
+		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
+
 	#######################################
 	# load pickle files
 

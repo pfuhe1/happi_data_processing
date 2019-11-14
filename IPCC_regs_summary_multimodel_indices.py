@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# Script to load RXx5day data for the IPCC regions
+# Script to load climate indices data for the IPCC regions
 #
 # 1. Loads a pickle file containing region data
-# Input data should be first calculated by running IPCC_regs_calc_RXx5day.py script
+# Input data should be first calculated by running IPCC_regs_calc_index.py script
 # 
 # 2. Computes sampling uncertainty ranges and multi-model summary
 #
@@ -14,12 +14,25 @@ import pickle
 import glob,os,socket,sys
 
 home = os.environ.get('HOME')
+argv = sys.argv
 
 # Import bootstrapping routine
 sys.path.append(os.path.join(home,'src/happi_analysis/HAPPI_plots'))
 from bootstrapping import bootstrap_mean_diff
 
 if __name__=='__main__':
+
+	#######################################
+	# Variables to set
+
+	data_freq = 'N/A'
+	var = 'pr'
+	if len(argv)>1:
+		index = argv[1].strip()
+	else:
+		index = 'RXx5day'
+	scenarios = ['1.5$^{\circ}$C - Hist','2$^{\circ}$C - Hist','2$^{\circ}$C - 1.5$^{\circ}$C']
+
 	
 	#######################################
 	# 	Paths/Variables  dependent on host/machine
@@ -45,27 +58,18 @@ if __name__=='__main__':
 		markers = ['s','.','+','x','2','1']
 		numthreads = 12
 	elif host=='anthropocene.ggy.bris.ac.uk':
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_data2.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_summary2.pkl'
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data2.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary2.pkl'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		summary_name = 'HAPPI'
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
-		data_pkl = '/home/users/pfu599/pkl/RXx5day_IPCCregs.pkl'
-		summary_pkl = '/home/users/pfu599/pkl/RXx5day_IPCCregs_MMsummary.pkl'
+		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_MMsummary.pkl'
 		numthreads = 8
 		models = ['ec-earth3-hr','hadgem3']#,'EC-EARTH3-HR','HadGEM3']
 		summary_name = 'helix_biascorr'
 		
-	#######################################
-	# Variables to set
-	
-	data_freq = 'N/A'
-	var = 'pr'
-	index = 'RXx5day'
-
-	scenarios = ['1.5$^{\circ}$C - Hist','2$^{\circ}$C - Hist','2$^{\circ}$C - 1.5$^{\circ}$C']
-	
 	#######################################
 	# load pickle files
 

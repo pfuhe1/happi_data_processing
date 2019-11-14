@@ -5,7 +5,7 @@ import subprocess,multiprocessing
 
 
 # Process all the data for the particular model, experiment and variable
-def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=4):
+def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=8):
 	print model,experiment,var
 	if data_freq != 'day':
 		raise Exception('Script can only process daily data, needs work to convert to monthly')
@@ -34,12 +34,12 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=4):
 				print 'path already exists, not creating directory',outpath_runs
 
 			# Determine specific warming level years for experiment
-			if experiment == 'All-Hist':
+			if experiment == 'historical':
 				swl_year = 2010
 			else:
 				swl_year = swl_years[experiment][ens]
-			iyear = swl_year-5
-			eyear = swl_year+5
+			iyear = swl_year-10
+			eyear = swl_year+10
 
 			# Extract data just from the SWL period
 			seldate_str = 'seldate,'+str(iyear)+'-01-01,'+str(eyear)+'-12-31'
@@ -68,7 +68,7 @@ if __name__=='__main__':
 	basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/MO/HadGEM3/rcp85/day/'
 	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/day/atmos/'
 	outpath = '/work/scratch/pfu599/helix_data'
-	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
+	experiments = ['historical','slice15','slice20']
 	models = ['HadGEM3']
 
 	data_freq = 'day'

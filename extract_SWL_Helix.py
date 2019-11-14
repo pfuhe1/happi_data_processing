@@ -16,18 +16,20 @@ def process_data(model,experiment,var,basepath,outpath,data_freq):
 	for runpath in runs:
 		try:
 			ens = os.path.basename(runpath)
+			if len(ens)!=6:
+				continue # skip 'original' runs e.g. r1i1p1_original
 	                outpath_runs=os.path.join(outpath,'SWL_data',model,experiment,'est1/v1-0/day/atmos',var,ens)
 	                if not os.path.exists(outpath_runs):
         	                os.makedirs(outpath_runs)
 			else:
 				print 'path already exists, not creating directory',outpath_runs
 	
-			if experiment == 'All-Hist':
+			if experiment == 'historical':
 				swl_year = 2010
 			else:
 				swl_year = swl_years[experiment][ens]
 			
-			for year in range(swl_year-5,swl_year+6):
+			for year in range(swl_year-10,swl_year+11):
 				print year
 				fname = var+'_'+model+'_'+ens+'_'+str(year)+'.nc'
 				infile = os.path.join(runpath,fname)
@@ -44,9 +46,10 @@ def process_data(model,experiment,var,basepath,outpath,data_freq):
 
 if __name__=='__main__':
 
-	basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/sarahshannon/helix/'
+	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/sarahshannon/helix/'
+	basepath = '/gws/nopw/j04/mohc_shared/users/sarahshannon/helix/'
 	outpath = '/work/scratch/pfu599/helix_data'
-	experiments = ['All-Hist','Plus15-Future','Plus20-Future']
+	experiments = ['historical','slice15','slice20']
 	models = ['ec-earth3-hr','hadgem3']
 
 	data_freq = 'day'

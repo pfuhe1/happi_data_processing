@@ -216,19 +216,54 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 		# CDO command
 		cdo_cmd = ["cdo","-L","yearmax","-runmean,5"]+timesel+[run_files[0],run_whole[:-3]+'_yrly.nc']
 		print cdo_cmd
-		subprocess.call(cdo_cmd)
+		cdo_ret = subprocess.call(cdo_cmd)
 	else: 
 		# calculate RXx5day (annual 5 day max) and concatenate files
 		# CDO command
 		cdo_cmd = ['cdo','-L','yearmax','-runmean,5']+timesel+['-cat',list_to_string(run_files)[:-1],run_whole[:-3]+'_yrly.nc']
 		print cdo_cmd
-		subprocess.call(cdo_cmd)
+		cdo_ret = subprocess.call(cdo_cmd)
 
 	if cdo_ret == 0: # First call was successful
 		cdo_cmd2 = ["cdo","timmean",run_whole[:-3]+'_yrly.nc',run_whole]
 		print cdo_cmd2
 		cdo_ret = subprocess.call(cdo_cmd2)
 	return cdo_ret
+
+
+# Process data for a single ensemble member/ run
+def process_run_yrmean(runpath,run_whole,unit_conv,timesel):
+# Generates run mean, and 'yrly' files of yrmean 
+    # Generates 10 yearly mean of RXx5day, and 'yrly' files of RXx5day (yearly max of 5 daily pr)
+    if os.path.isdir(runpath):
+        # get input files in runpath
+        run_files=glob.glob(runpath+'/*.nc')
+    else:
+        # The runpath is the file
+        run_files = [runpath]
+    run = os.path.basename(runpath)
+    print run
+
+    if len(run_files)==0:
+        raise Exception('error, no files found: '+runpath)
+    elif len(run_files)==1:
+        # Only one file, calculate RXx5day (annual 5 day max)
+        # CDO command
+        cdo_cmd = ["cdo","-L","yearmean"]+timesel+[run_files[0],run_whole[:-3]+'_yrly.nc']
+        print cdo_cmd
+        cdo_ret = subprocess.call(cdo_cmd)
+    else:
+        # calculate RXx5day (annual 5 day max) and concatenate files
+        # CDO command
+        cdo_cmd = ['cdo','-L','yearmean']+timesel+['-cat',list_to_string(run_files)[:-1],run_whole[:-3]+'_yrly.nc']
+        print cdo_cmd
+        cdo_ret = subprocess.call(cdo_cmd)
+
+    if cdo_ret == 0: # First call was successful
+        cdo_cmd2 = ["cdo","timmean",run_whole[:-3]+'_yrly.nc',run_whole]
+        print cdo_cmd2
+        cdo_ret = subprocess.call(cdo_cmd2)
+    return cdo_ret
 
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos',timesel=[]):
@@ -248,9 +283,13 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			process = process_run_yrmax
 			if data_freq == 'day':
 				#rename index
-				index = var+'yrmaxdaily'
+				index = var+index+'daily'
 			if data_freq == 'mon':
-				index = var+'yrmaxmonthly'
+				index = var+index+'monthly'
+		elif index == 'yrmean':
+			process = process_run_yrmean
+			# rename index 
+			index = var+index
 		
 		outpath_runs=os.path.join(outdir,'indices_data',model,experiment,index)
 		if not os.path.exists(outpath_runs):
@@ -343,6 +382,7 @@ if __name__=='__main__':
 	elif host =='anthropocene.ggy.bris.ac.uk':
 		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
+		experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
 		
 		#basepath = '/export/anthropocene/array-01/pu17449/happi_data_extra/'
 		#models = ['HadRM3P-SAS50']
@@ -360,7 +400,6 @@ if __name__=='__main__':
 		
 
 
-	experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
 	timespan = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
 
 	#var = 'mrro'
@@ -371,6 +410,7 @@ if __name__=='__main__':
 	unit_conv = 86400.
 
 #	indices = ['yrmax']
+#	indices = ['yrmean']
 #	data_freq = 'mon'
 	
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
@@ -388,6 +428,16 @@ if __name__=='__main__':
 	# PROCESS CMIP5 slices
 #	models = ['CMIP5']
 #	experiments = ['historical','slice15','slice20']
+#	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily_regrid'
+#	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily_regrid/'
+#	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
+#	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'
+
+	# PROCESS CMIP5 slices
+	models = ['CMIP6']
+	experiments = ['historical','slice15','slice20']
+	basepath = '/work/scratch-nompiio/pfu599/CMIP6_slices/subset_daily_all/'
+	outdir = '/work/scratch-nompiio/pfu599/CMIP6_slices/indices'
 #	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily_regrid'
 #	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily_regrid/'
 #	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
