@@ -22,6 +22,15 @@ from basins_happi_alldata import get_basindata,create_mask
 
 
 if __name__=='__main__':
+
+	#######################################
+	# Variables to set
+
+	data_freq = 'N/A'
+	var = 'pr'
+	#index = 'RXx5day'
+	index = 'pryrmean'
+
 	
 	#######################################
 	# 	Paths/Variables  dependent on host/machine
@@ -50,10 +59,12 @@ if __name__=='__main__':
 		shapefile = '/export/anthropocene/array-01/pu17449/shapefiles/referenceRegions.shp'
 		landmask_dir = '/export/anthropocene/array-01/pu17449/happi_data/landmask'
 		basepath = '/export/anthropocene/array-01/pu17449/happi_processed/'
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_data2.pkl'
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
 		mask_pkl = '/export/anthropocene/array-01/pu17449/pkl/IPCCreg_masks2.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_summary2.pkl'
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5','CMIP5']
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
+		polygons_pkl = '/export/anthropocene/array-01/pu17449/pkl/IPCCreg_polygons.pkl'
+		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5','CMIP5']
+		models = ['CanAM4']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		shapefile = '/home/users/pfu599/shapefiles/referenceRegions.shp'
@@ -64,12 +75,6 @@ if __name__=='__main__':
 		numthreads = 8
 		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 		
-	#######################################
-	# Variables to set
-
-	data_freq = 'N/A'
-	var = 'pr'
-	index = 'RXx5day'
 
 	#######################################
 	# load pickle files
@@ -89,26 +94,30 @@ if __name__=='__main__':
 	#######################################
 	# load shapefile data
 
-	print 'loading region polygons...'
+	print('loading region polygons...')
 	reg_polygons,reg_attrs = load_shapefile_attrs(shapefile,'LAB')
-
+	with open(polygons_pkl,'wb') as f_pkl:
+		pickle.dump(reg_polygons,f_pkl,-1)
+		pickle.dump(reg_attrs,f_pkl,-1)
+	#print('exiting...')
+	#sys.exit(0)
 
 	###########################################################################################
 	# Loop over models
 	for model in models:
-		print model
+		print(model)
 
 		# Set experiments
 		if model =='CESM-CAM5':
-			experiments = ['historical','1pt5degC','2pt0degC']
-		elif model == 'CMIP5':
+			experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
+		elif model == 'CMIP5' or model == 'CanESM2':
 			experiments = ['historical','slice15','slice20']
 		else:
 			experiments = ['All-Hist','Plus15-Future','Plus20-Future']
 
 		# Load grid information
 		f_landmask = glob.glob(landmask_dir+'/sftlf_fx_'+model+'_*.nc')[0]
-		print f_landmask
+		print(f_landmask)
 		with Dataset(f_landmask,'r') as tmp:
 			lat = tmp.variables['lat'][:]
 			lon = tmp.variables['lon'][:]
@@ -123,18 +132,18 @@ if __name__=='__main__':
 		
 		##################################################################
 		# Create masks
-		print 'Creating masks from polygons'
+		print('Creating masks from polygons')
 		pool = multiprocessing.Pool(processes=len(reg_polygons.keys()))
-		if not region_masks.has_key(model):
+		if not model in region_masks:
 			region_masks[model]={}
 		results = {}
 		for region,polygons in reg_polygons.iteritems():
-			if not region_masks[model].has_key(region):
+			if not region in region_masks[model]:
 				results[region]=pool.apply_async(create_mask,(polygons,points,nlat,nlon))
 		# close the pool and make sure the processing has finished
 		pool.close()
 		pool.join()
-		print 'collecting data...'
+		print('collecting data...')
 		for region,result in results.iteritems():
 			polymask = result.get(timeout=60.)
 			use = reg_attrs[region]['USAGE']
@@ -152,13 +161,13 @@ if __name__=='__main__':
 
 		##################################################################
 		# Load data
-		if not data_masked.has_key(model):
+		if not model in data_masked:
 			data_masked[model] = {}
 		for experiment in experiments:
 			file_pattern = 'indices_data/'+model+'/'+experiment+'/'+index+'/*_yrly.nc'
-			if not data_masked[model].has_key(experiment):
+			if not experiment in data_masked[model]:
 				data_masked[model][experiment] = get_basindata(model,experiment,var,basepath,data_freq,numthreads=numthreads,masks=region_masks[model],file_pattern=file_pattern)
-				print experiment,data_masked[model][experiment].keys()
+				print(experiment,data_masked[model][experiment].keys())
 
 		# write out data
 		with open(data_pkl,'wb') as f_pkl:

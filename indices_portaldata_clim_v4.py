@@ -53,7 +53,7 @@ def create_netcdf_dryspell(template,var,data,outname):
 				outfile.createVariable(dim,'d',(dim,))
 				outfile.variables[dim][:]=template.variables[dim][:]
 				
-			ndic#print template.variables[dim].__dict__
+				#print template.variables[dim].__dict__
 			for att in template.variables[dim].ncattrs():
 				outfile.variables[dim].__setattr__(att,template.variables[dim].__getattribute__(att))
 
@@ -68,7 +68,7 @@ def create_netcdf_dryspell(template,var,data,outname):
 	# Write data
 	outfile.variables[newvar][:]=data
 	
-	if template.variables.has_key('lat_bnds'):
+	if 'lat_bnds' in template.variables:
 		outfile.createDimension('bnds',2)
 		outfile.createVariable('lat_bnds','d',['lat','bnds'])
 		outfile.createVariable('lon_bnds','d',['lon','bnds'])
@@ -97,7 +97,7 @@ def process_run_dryspell(runpath,whole_run,unit_conv):
 		# The runpath is the file
 		run_files = [runpath]
 	run = os.path.basename(runpath)
-	print run	
+	print(run)
 
 	if len(run_files)==0:
 		raise Exception('error, no files found: '+runpath)
@@ -124,7 +124,7 @@ def process_run_raindays(runpath,run_whole,unit_conv):
 		# The runpath is the file
 		run_files = [runpath]
 	run = os.path.basename(runpath)
-	print run
+	print(run)
 
 	if len(run_files)==0:
 		raise Exception('error, no files found: '+runpath)
@@ -132,14 +132,14 @@ def process_run_raindays(runpath,run_whole,unit_conv):
 		# Only one file, calculate raindays
 		# CDO command
 		cdo_cmd = "cdo ymonmean -expr,'raindays=pr>"+thresh+"' " + run_files[0] + " " + run_whole
-		print cdo_cmd
+		print(cdo_cmd)
 		os.system(cdo_cmd)
 	else: 
 		# calculate raindays and concatenate files (have to do in two parts)
 		# CDO command
 		run_cat = run_whole[:-3]+'_cat.nc'
 		cdo_cmd = "cdo cat " + list_to_string_raindays(run_files,unit_conv) +" "+ run_cat
-		print cdo_cmd
+		print(cdo_cmd)
 		os.system(cdo_cmd)
 		cdo_cmd2 = "cdo ymonmean " + run_cat + " " + run_whole
 		os.system(cdo_cmd2)
@@ -154,7 +154,7 @@ def process_run_yrmax(runpath,run_whole,unit_conv,timesel):
 		# The runpath is the file
 		run_files = [runpath]
 	run = os.path.basename(runpath)
-	print run
+	print(run)
 
 	if len(run_files)==0:
 		raise Exception('error, no files found: '+runpath)
@@ -162,14 +162,40 @@ def process_run_yrmax(runpath,run_whole,unit_conv,timesel):
 		# Only one file, calculate yearmax
 		# CDO command
 		cdo_cmd = "cdo yearmax "+timesel + run_files[0] + " " + run_whole
-		print cdo_cmd
+		print(cdo_cmd)
 		os.system(cdo_cmd)
 	else: 
 		# calculate yearmax and concatenate files
 		# CDO command
 		cdo_cmd = "cdo -L yearmax "+timesel+ "-cat '" +list_to_string(run_files) + "' " + run_whole
-		print cdo_cmd
-		os.system(cdo_cmd)	
+		print(cdo_cmd)
+		os.system(cdo_cmd)
+
+# Process data for a single ensemble member/ run
+def process_run_yrmean(runpath,run_whole,unit_conv,timesel):
+	if os.path.isdir(runpath):
+		# get input files in runpath
+		run_files=glob.glob(runpath+'/*.nc')
+	else:
+		# The runpath is the file
+		run_files = [runpath]
+	run = os.path.basename(runpath)
+	print(run)
+
+	if len(run_files)==0:
+		raise Exception('error, no files found: '+runpath)
+	elif len(run_files)==1:
+		# Only one file, calculate yearmax
+		# CDO command
+		cdo_cmd = ["cdo","yearmean"]+timesel + [run_files[0],run_whole]
+		print(cdo_cmd)
+		return subprocess.call(cdo_cmd)
+	else: 
+		# calculate yearmax and concatenate files
+		# CDO command
+		cdo_cmd = ["cdo","-L","yearmean"]+timesel+ ["-cat",' '.join(run_files),run_whole]
+		print(cdo_cmd)
+		return subprocess.call(cdo_cmd)
 
 # Process data for a single ensemble member/ run
 def process_run_Rx5day(runpath,run_whole,unit_conv,timesel):
@@ -180,26 +206,26 @@ def process_run_Rx5day(runpath,run_whole,unit_conv,timesel):
 		# The runpath is the file
 		run_files = [runpath]
 	run = os.path.basename(runpath)
-	print run
+	print(run)
 
 	if len(run_files)==0:
 		raise Exception('error, no files found: '+runpath)
 	elif len(run_files)==1:
 		# Only one file, calculate Rx5day (monthly 5 day max)
 		# CDO command
-		cdo_cmd = "cdo ymonmax -runmean,5 " + timesel + run_files[0] + " " + run_whole
-		print cdo_cmd
-		os.system(cdo_cmd)
+		cdo_cmd = ["cdo","ymonmax","-runmean,5"] + timesel + [run_files[0],run_whole]
+		print(cdo_cmd)
+		subprocess.call(cdo_cmd)
 	else: 
 		# calculate Rx5day (monthly 5 day max) and concatenate files
 		# CDO command
-		cdo_cmd = "cdo -L ymonmax -runmean,5 "+timesel+" -cat '" +list_to_string(run_files) + "' " + run_whole
-		print cdo_cmd
-		os.system(cdo_cmd)
+		cdo_cmd = ["cdo","-L","ymonmax","-runmean,5"]+timesel+["-cat",' '.join(run_files),run_whole]
+		print(cdo_cmd)
+		subprocess.call(cdo_cmd)
 
 # Process data for a single ensemble member/ run
-def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
-	# Generates 10 yearly mean of RXx5day, and 'yrly' files of RXx5day (yearly max of 5 daily pr)
+def process_run_Tx3day(runpath,run_whole,unit_conv,timesel):
+	#print(runpath,run_whole,unit_conv,timesel)
 	if os.path.isdir(runpath):
 		# get input files in runpath
 		run_files=glob.glob(runpath+'/*.nc')
@@ -207,27 +233,57 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 		# The runpath is the file
 		run_files = [runpath]
 	run = os.path.basename(runpath)
-	print run
+	print(run)
+
+	if len(run_files)==0:
+		raise Exception('error, no files found: '+runpath)
+	elif len(run_files)==1:
+		# Only one file, calculate Tx3day (monthly max of 3 day mean tmax
+		# CDO command
+		cdo_cmd = ["cdo","-L","monmax","-runmean,3"]+timesel+[run_files[0],run_whole]
+		print(cdo_cmd)
+		cdo_ret = subprocess.call(cdo_cmd)
+	else: 
+		# calculate Tx3day (monthly max of 3 day mean tmax) and concatenate files
+		# CDO command
+		cdo_cmd = ["cdo","-L","monmax","-runmean,3"]+timesel+['-cat',list_to_string(run_files)[:-1],run_whole]
+		print(cdo_cmd)
+		cdo_ret = subprocess.call(cdo_cmd)
+
+	return cdo_ret
+
+# Process data for a single ensemble member/ run
+def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
+	# Generates 'yrly' files of RXx5day (yearly max of 5 daily pr)
+	if os.path.isdir(runpath):
+		# get input files in runpath
+		run_files=glob.glob(runpath+'/*.nc')
+	else:
+		# The runpath is the file
+		run_files = [runpath]
+	run = os.path.basename(runpath)
+	print(run)
 
 	if len(run_files)==0:
 		raise Exception('error, no files found: '+runpath)
 	elif len(run_files)==1:
 		# Only one file, calculate RXx5day (annual 5 day max)
 		# CDO command
-		cdo_cmd = ["cdo","-L","yearmax","-runmean,5"]+timesel+[run_files[0],run_whole[:-3]+'_yrly.nc']
-		print cdo_cmd
-		subprocess.call(cdo_cmd)
+		cdo_cmd = ["cdo","-L","yearmax","-runmean,5"]+timesel+[run_files[0],run_whole]
+		print(cdo_cmd)
+		return subprocess.call(cdo_cmd)
 	else: 
 		# calculate RXx5day (annual 5 day max) and concatenate files
 		# CDO command
-		cdo_cmd = ['cdo','-L','yearmax','-runmean,5']+timesel+['-cat',list_to_string(run_files)[:-1],run_whole[:-3]+'_yrly.nc']
-		print cdo_cmd
-		subprocess.call(cdo_cmd)
+		cdo_cmd = ['cdo','-L','yearmax','-runmean,5']+timesel+['-cat',list_to_string(run_files)[:-1],run_whole]
+		print(cdo_cmd)
+		return subprocess.call(cdo_cmd)
 
-	cdo_cmd2 = ['cdo','timmean',run_whole[:-3]+'_yrly.nc',run_whole]
-	print cdo_cmd2
-	cdo_ret = subprocess.call(cdo_cmd2)
-	return cdo_ret
+	# PFU, removed calculation of time/decadal mean of index
+	#cdo_cmd2 = ['cdo','timmean',run_whole[:-3]+'_yrly.nc',run_whole]
+	#print cdo_cmd2
+	#cdo_ret = subprocess.call(cdo_cmd2)
+	#return cdo_ret
 
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos',timesel=[]):
@@ -243,6 +299,12 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			process = process_run_RXx5day
 		elif index == 'dryspell':
 			process = process_run_dryspell
+		elif index == 'Tx3day':
+			process = process_run_Tx3day
+		elif index == 'yrmean':
+			#rename index
+			index = var+'yrmean'
+			process = process_run_yrmean
 		elif index == 'yrmax':
 			process = process_run_yrmax
 			if data_freq == 'day':
@@ -258,11 +320,11 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		if not os.path.exists(outdir+'/indices_ensmean/'):
 			os.makedirs(outdir+'/indices_ensmean/')
 			
-		print model,experiment,var
+		print(model,experiment,var)
 		outmean = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
 		outstd = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
 		if os.path.exists(outmean) and os.path.exists(outstd):
-			print 'files already exist, skipping'
+			print('files already exist, skipping')
 			return
 		
 		# Create pool of processes to process runs in parallel. 
@@ -272,15 +334,16 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		# Loop over runs
 		run_averages = ''
 		cmd_ret = {}
-		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
+#		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
+		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)[:100] # Limit to 100 ensemble members
 		for runpath in runs:
 			run = os.path.basename(runpath)
 			if os.path.isdir(runpath):
 				# Add .nc to the end if run is a dir
-				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run+'.nc')
+				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run+'_yrly.nc')
 			else: 
 				# Run contains '.nc' already
-				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run)
+				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run[:-3]+'_yrly.nc')
 			# Only process if it doesn't exist
 			if not os.path.exists(run_whole):
 				#raise Exception('Debug, not processing runs')
@@ -295,24 +358,29 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		pool.join()
 
 		# Loop through runs and add to list of successful output files		
-		for run_whole,result in cmd_ret.iteritems():
+		for run_whole,result in cmd_ret.items():
 			retcode = result.get(timeout=600.)
+			print(run_whole,retcode)
 			if retcode == 0 and os.path.exists(run_whole): # if the file was produced successfully
 				run_averages += run_whole +' '
+			else:
+				if os.path.exists(run_whole): # delete failed file
+					print('Failed! Deleting ',run_whole)
+					os.remove(run_whole)
 
 		# Ensemble mean
 		cdo_cmd = 'cdo ensmean ' + run_averages + outmean
-		print cdo_cmd
+		print(cdo_cmd)
 		os.system(cdo_cmd)
 
 		# Ensemble stdev
 		cdo_cmd = 'cdo ensstd ' + run_averages + outstd
-		print cdo_cmd
+		print(cdo_cmd)
 		os.system(cdo_cmd)
 
-	except Exception,e:
-		print 'Error in script: '
-		print e
+	except Exception as e:
+		print('Error in script: ')
+		print(e)
 		raise
 
 
@@ -341,13 +409,13 @@ if __name__=='__main__':
 		outdir = '/data/scratch/pu17449/processed_data/'
 	elif host =='anthropocene.ggy.bris.ac.uk':
 		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
-		
+		models = ['NorESM1-HAPPI','MIROC5','CAM4-2degree','ECHAM6-3-LR','CanAM4','HadAM3P','CAM5-1-2-025degree']
+		models = ['CanAM4']
 		#basepath = '/export/anthropocene/array-01/pu17449/happi_data_extra/'
 		#models = ['HadRM3P-SAS50']
 		
 		# Number of processes to run in parallel to process ensemble members
-		numthreads = 4
+		numthreads = 16
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		basepath = '/work/scratch/pfu599/helix_data/SWL_data/'
@@ -369,20 +437,30 @@ if __name__=='__main__':
 	domain = 'atmos'
 	unit_conv = 86400.
 
-#	indices = ['yrmax']
-#	data_freq = 'mon'
+	indices = ['yrmean']
+	data_freq = 'mon'
 	
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
-	indices = ['RXx5day']
-	data_freq = 'day'
+	#indices = ['RXx5day']
+	#data_freq = 'day'
 
+
+	#indices = ['Tx3day']
+	#var = 'tasmax'
+	#unit_conv=1.
 
 	# PROCESS CESM low warming
 #	# override defaults
 #	models = ['CESM-CAM5']
-#	basepath = '/export/anthropocene/array-01/pu17449/cesm_data/decade_data_v2/'
-#	experiments = ['historical','1pt5degC','2pt0degC']
+#	basepath = '/export/anthropocene/array-01/pu17449/cesm_processed/decade_data_v3/'
+#	experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
 #	unit_conv = 86400.*1000 # Note, not needed for runoff
+
+	# PROCESS CESM low warming
+#	# override defaults
+	#models = ['CanESM2']
+	#basepath = '/export/anthropocene/array-01/pu17449/canesm2_processed/decade_data_v3/'
+	#experiments = ['historical','slice15','slice20']
 
 	# PROCESS CMIP5 slices
 #	models = ['CMIP5']

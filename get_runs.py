@@ -41,10 +41,10 @@ def CMIP5_runs(basepath,experiment,data_freq,var):
 ######################################################################
 
 def CESM_runs(basepath,experiment,data_freq,var):
-	print 'getting runs for CESM'
+	print('getting runs for CESM/CanESM large ensembles')
 #	basepath = '/export/silurian/array-01/pu17449/CESM_low_warming/decade_data_v2/'
 	runpath = os.path.join(basepath,experiment,data_freq,var,'run*')
-	#print runpath
+	print(runpath)
 	return glob.glob(runpath)
 
 ######################################################################
@@ -106,7 +106,7 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 	# Get list of paths that match our filename pattern
 	if run_pattern:
 		pathpattern=basepath+model+'/'+experiment+ '/'+est+'/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
-		print pathpattern
+		print(pathpattern)
 		runs = glob.glob(pathpattern)
 	return runs
 
@@ -116,7 +116,7 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 # This gets all of the runs, including bias correction and standard short runs
 def get_runs_all(model,experiment,basepath,data_freq,var,domain='atmos'):
 	run_pattern = None
-	if model =='CESM' or model == 'CESM-CAM5':
+	if model =='CESM' or model == 'CESM-CAM5' or model=='CanESM2':
 		return CESM_runs(basepath,experiment,data_freq,var)
 	elif model=='MIROC5' and experiment=='All-Hist':
 		# choose specific runs
@@ -166,7 +166,7 @@ def get_runs_all(model,experiment,basepath,data_freq,var,domain='atmos'):
 	# Get list of paths that match our filename pattern
 	if run_pattern:
 		pathpattern=basepath+model+'/'+experiment+ '/'+est+'/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
-		print pathpattern
+		print(pathpattern)
 		runs = glob.glob(pathpattern)
 	return runs
 
@@ -235,6 +235,6 @@ def get_bc_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 		est = 'est2' 
 	if run_pattern:
 		pathpattern=basepath+model+'/'+experiment+ '/'+est+'/'+version+'/'+data_freq+'/'+domain+'/'+ var+'/'+run_pattern
-		print pathpattern
+		print(pathpattern)
 		runs = glob.glob(pathpattern)
 	return runs

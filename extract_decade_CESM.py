@@ -14,7 +14,7 @@ def list_to_string(l):
 # Process data for a single ensemble member/ run (add two fields together)
 def process_run_add(experiment,runpath1,runpath2,var,var_rename,run_whole):
 	run = os.path.basename(runpath1)
-	print run
+	print(run)
 	if experiment=='historical':
 		#seldate = '-seldate,1995-01-01,2005-12-31 '
 		# Hack to shift date to centre of month rather than the start of the following month
@@ -28,7 +28,7 @@ def process_run_add(experiment,runpath1,runpath2,var,var_rename,run_whole):
 
 	# CDO command
 	cdo_cmd = 'cdo -add '+seldate + runpath1 + ' ' + seldate + runpath2 + ' ' + run_whole[:-3]+'_tmp.nc'
-	print cdo_cmd
+	print(cdo_cmd)
 	os.system(cdo_cmd)
 
 	# rename variable
@@ -48,7 +48,7 @@ def process_run(experiment,runpath1,var,var_rename,run_whole,data_freq):
 		shift = '-shifttime,-15 '
 	else:
 		shift = ''
-	print run
+	print(run)
 	if experiment=='historical':
 		#seldate = '-seldate,1995-01-01,2005-12-31 '
 		# Hack to shift date to centre of month rather than the start of the following month
@@ -61,7 +61,7 @@ def process_run(experiment,runpath1,var,var_rename,run_whole,data_freq):
 
 	# CDO command
 	cdo_cmd = 'cdo '+seldate + runpath1 + ' ' + run_whole[:-3]+'_tmp.nc'
-	print cdo_cmd
+	print(cdo_cmd)
 	os.system(cdo_cmd)
 
 	# rename variable
@@ -76,9 +76,9 @@ def process_run(experiment,runpath1,var,var_rename,run_whole,data_freq):
 
 # Process all the data for the particular model, experiment and variable
 def process_data(experiment,var,basepath,numthreads,data_freq):
-	var_rename={'TREFHT':'tas','PRECL':'pr','PRECT':'pr','QRUNOFF':'mrro','U850':'ua','V850':'va','QOVER':'mrros'}
+	var_rename={'TREFHT':'tas','TREFHTMN':'tasmin','TREFHTMX':'tasmax','PRECL':'pr','PRECT':'pr', 'QRUNOFF':'mrro','U850':'ua','V850':'va','QOVER':'mrros'}
 	try:		
-		print experiment,var
+		print(experiment,var)
 
 		# Create pool of processes to process runs in parallel. 
 		pool = multiprocessing.Pool(processes=numthreads)
@@ -90,11 +90,11 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 		# (use 2 degree scenario)
 		if experiment == 'historical':
 			runstring = runstring.replace('historical','2pt0degC')
-		print runstring
+		print(runstring)
 		runs = glob.glob(runstring)
-		print runs
+		print(runs)
 
-		outpath_runs=os.path.join(basepath,'decade_data_v2',experiment)
+		outpath_runs=os.path.join(basepath,'..','cesm_processed','decade_data_v2',experiment)
 		if not os.path.exists(outpath_runs):
 			os.mkdir(outpath_runs)		
 	
@@ -127,9 +127,9 @@ def process_data(experiment,var,basepath,numthreads,data_freq):
 
 	
 
-	except Exception,e:
-		print 'Error in script: '
-		print e
+	except Exception as e:
+		print('Error in script: ')
+		print(e)
 		raise
 
 if __name__=='__main__':
@@ -146,9 +146,9 @@ if __name__=='__main__':
 
 	data_freq = 'day'
 	#varlist = ['PRECT']
-	varlist = ['U850','V850','QOVER']
-
-	numthreads = 4
+	#varlist = ['U850','V850','QOVER']
+	varlist = ['TREFHT','TREFHTMN','TREFHTMX']
+	numthreads = 8
 
 	for experiment in experiments:
 		for var in varlist:

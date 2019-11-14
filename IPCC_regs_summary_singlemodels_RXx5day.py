@@ -26,9 +26,10 @@ if __name__=='__main__':
 
 	host=socket.gethostname()
 	if host=='anthropocene.ggy.bris.ac.uk':
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_data2.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_summary2.pkl'
-		models = ['CMIP5','CESM-CAM5']
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_data3.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/RXx5day_IPCCreg_summary3.pkl'
+		#models = ['CMIP5','CESM-CAM5']
+		models = ['CanESM2','CanAM4']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/RXx5day_IPCCregs.pkl'
@@ -75,7 +76,7 @@ if __name__=='__main__':
 		if model =='CESM-CAM5':
 			experiments = ['historical','1pt5degC','2pt0degC']
 			scale = 1000.
-		elif model == 'CMIP5':
+		elif model == 'CMIP5' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk': 
 			experiments = ['historical','slice15','slice20']
 			scale = 1.
 		else:

@@ -22,12 +22,13 @@ models_list=['MIROC/MIROC5','NCC/NorESM1-HAPPI','CCCma/CanAM4','ETH/CAM4-2degree
 includevars = []
 #Monthly vars:
 #includevars += ['pr_Amon','tas*_Amon','rsds_Amon','hfls_Amon','mrro*_Lmon','ua_Amon','va_Amon','zg_Amon','ps_Amon','psl_Amon','hurs_Amon']
-includevars+= ['wa_Amon','wap_Amon'] # testing download of vertical velocity
+#includevars+= ['wa_Amon','wap_Amon'] # testing download of vertical velocity
 #includevars += ['pr_Amon','tas*_Amon','hfls_Amon','mrro*_Lmon','ua_Amon','va_Amon','zg_Amon','ps_Amon']
 
 # Daily vars
 #includevars += ['pr_Aday','rsds_Aday','tas*_Aday']
 #includevars += ['pr_Aday','tas*_Aday','hurs_Aday']
+includevars += ['psl_Aday']
 
 # Convert includevars to rsync include string
 includearr=includestr(includevars)
