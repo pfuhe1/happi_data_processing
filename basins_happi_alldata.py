@@ -119,12 +119,18 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 			f_template = runs[0]
 		print('reading grid from',f_template)
 		with Dataset(f_template,'r') as tmp:
-			try:
+			if 'lat' in tmp.variables and 'lon' in tmp.variables:
 				lat = tmp.variables['lat'][:]
 				lon = tmp.variables['lon'][:]
-			except:
+			elif 'latitude' in tmp.variables and 'longitude' in tmp.variables:
+				lat = tmp.variables['latitude'][:]
+				lon = tmp.variables['longitude'][:]
+			elif 'latitude0' in tmp.variables and 'longitude0' in tmp.variables:
 				lat = tmp.variables['latitude0'][:]
 				lon = tmp.variables['longitude0'][:]
+			else:
+				raise Exception('Error, cant determin lat and lon variables: '+str(tmp.variables.keys()))
+
 		if masks is  None:
 			print('calculating 2D lat/lon arrays')
 			# Create 2D arrays of lon and lat

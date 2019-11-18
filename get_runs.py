@@ -36,6 +36,7 @@ def norESM_histruns(basepath,model,experiment,var,data_freq,domain):
 
 def CMIP5_runs(basepath,experiment,data_freq,var):
 	runpath = os.path.join(basepath,var,experiment,var+'_'+data_freq+'_*.nc')
+	print('CMIP path',runpath)
 	return glob.glob(runpath)
 
 ######################################################################
@@ -64,7 +65,7 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 		run_pattern = 'ens0*'
 	elif model=='CanAM4' or model=='ec-earth3-hr' or model == 'hadgem3':
 		run_pattern = 'r*i1p1'
-	elif model == 'CMIP5' or model == 'CMIP6':
+	elif model == 'CMIP5' or model == 'CMIP6' or model=='UKCP18-global':
 		return CMIP5_runs(basepath,experiment,data_freq,var)
 	else: 
 	#Default
@@ -125,7 +126,7 @@ def get_runs_all(model,experiment,basepath,data_freq,var,domain='atmos'):
 		run_pattern = 'ens*'
 	elif model=='CanAM4' or model.lower()=='ec-earth3-hr' or model.lower() == 'hadgem3':	
 		run_pattern = 'r*i1p1'
-	elif model == 'CMIP5' or model=='CMIP6':
+	elif model == 'CMIP5' or model=='CMIP6' or model=='UKCP18-global':
 		return CMIP5_runs(basepath,experiment,data_freq,var)
 	else: 
 	#Default

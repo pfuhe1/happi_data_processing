@@ -71,13 +71,18 @@ if __name__=='__main__':
 		models = ['CanAM4']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
-		shapefile = '/home/users/pfu599/shapefiles/referenceRegions.shp'
-		landmask_dir = '/home/users/pfu599/helix_landfrac'
-		basepath = '/work/scratch/pfu599/helix_data/processed_data/'
+		shapefile = '/home/users/pfu599/data/shapefiles/referenceRegions.shp'
+		landmask_dir = '/home/users/pfu599/data/helix_landfrac'
+		#basepath = '/work/scratch/pfu599/helix_data/processed_data/'
+		basepath = '/work/scratch-nompiio/pfu599/timeslice_data/'
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
 		mask_pkl = '/home/users/pfu599/pkl/IPCCreg_masks.pkl'
+		polygons_pkl = '/home/users/pfu599/pkl/IPCCreg_polygons.pkl'
 		numthreads = 8
-		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
+		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-1permodel','UKCP18-global']
+	else:
+		raise Exception('ERROR, Unknown host: '+host)
+
 	
 	#######################################
 	# load pickle files
@@ -113,7 +118,7 @@ if __name__=='__main__':
 		# Set experiments
 		if model =='CESM-CAM5':
 			experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
-		elif model == 'CMIP5' or or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+		elif model == 'CMIP5' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 			experiments = ['historical','slice15','slice20']
 		else:
 			experiments = ['All-Hist','Plus15-Future','Plus20-Future']

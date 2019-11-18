@@ -317,25 +317,25 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		if not os.path.exists(outpath_runs):
 			os.makedirs(outpath_runs)
 
-		if not os.path.exists(outdir+'/indices_ensmean/'):
-			os.makedirs(outdir+'/indices_ensmean/')
+#		if not os.path.exists(outdir+'/indices_ensmean/'):
+#			os.makedirs(outdir+'/indices_ensmean/')
 			
-		print(model,experiment,var)
-		outmean = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
-		outstd = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
-		if os.path.exists(outmean) and os.path.exists(outstd):
-			print('files already exist, skipping')
-			return
+#		print(model,experiment,var)
+#		outmean = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
+#		outstd = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
+#		if os.path.exists(outmean) and os.path.exists(outstd):
+#			print('files already exist, skipping')
+#			return
 		
 		# Create pool of processes to process runs in parallel. 
 		pool = multiprocessing.Pool(processes=numthreads)
 
 
 		# Loop over runs
-		run_averages = ''
+		run_averages = []
 		cmd_ret = {}
-#		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
-		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)[:100] # Limit to 100 ensemble members
+		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
+#		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)[:100] # Limit to 100 ensemble members
 		for runpath in runs:
 			run = os.path.basename(runpath)
 			if os.path.isdir(runpath):
@@ -351,7 +351,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 				#process(runpath,run_whole)
 			else: # file was previously created
 				# Add this run to list
-				run_averages += run_whole +' '
+				run_averages.append(run_whole)
 
 		# close the pool and make sure the processing has finished
 		pool.close()
@@ -362,21 +362,21 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			retcode = result.get(timeout=600.)
 			print(run_whole,retcode)
 			if retcode == 0 and os.path.exists(run_whole): # if the file was produced successfully
-				run_averages += run_whole +' '
+				run_averages.append(run_whole)
 			else:
 				if os.path.exists(run_whole): # delete failed file
 					print('Failed! Deleting ',run_whole)
 					os.remove(run_whole)
 
-		# Ensemble mean
-		cdo_cmd = 'cdo ensmean ' + run_averages + outmean
-		print(cdo_cmd)
-		os.system(cdo_cmd)
+#		# Ensemble mean
+#		cdo_cmd = ['cdo','ensmean']+run_averages + [outmean]
+#		print cdo_cmd
+#		subprocess.call(cdo_cmd)
 
-		# Ensemble stdev
-		cdo_cmd = 'cdo ensstd ' + run_averages + outstd
-		print(cdo_cmd)
-		os.system(cdo_cmd)
+#		# Ensemble stdev
+#		cdo_cmd = ['cdo','ensstd'] + run_averages + [outstd]
+#		print cdo_cmd
+#		subprocess.call(cdo_cmd)
 
 	except Exception as e:
 		print('Error in script: ')
@@ -437,12 +437,12 @@ if __name__=='__main__':
 	domain = 'atmos'
 	unit_conv = 86400.
 
-	indices = ['yrmean']
-	data_freq = 'mon'
+	#indices = ['yrmean']
+	#data_freq = 'mon'
 	
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
-	#indices = ['RXx5day']
-	#data_freq = 'day'
+	indices = ['RXx5day','yrmean']
+	data_freq = 'day'
 
 
 	#indices = ['Tx3day']
@@ -456,7 +456,7 @@ if __name__=='__main__':
 #	experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
 #	unit_conv = 86400.*1000 # Note, not needed for runoff
 
-	# PROCESS CESM low warming
+	# PROCESS CanESM2 large ensemble
 #	# override defaults
 	#models = ['CanESM2']
 	#basepath = '/export/anthropocene/array-01/pu17449/canesm2_processed/decade_data_v3/'
@@ -470,6 +470,17 @@ if __name__=='__main__':
 #	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
 #	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'
 
+	# PROCESS CMIP slices
+	models = ['CMIP6']
+	experiments = ['historical','slice15','slice20']
+	basepath = '/work/scratch-nompiio/pfu599/CMIP6_slices/subset_daily_all/'
+	outdir = '/work/scratch-nompiio/pfu599/CMIP6_slices/indices'
+
+	# Process UKCP18 slices
+	#models = ['UKCP18-global']
+    #    experiments = ['historical','slice15','slice20']
+    #    basepath = '/work/scratch-nompiio/pfu599/UKCP18_slices/subset_daily_all/'
+    #    outdir = '/work/scratch-nompiio/pfu599/UKCP18_slices/indices'
 
 	for model in models:
 		for experiment in experiments:
