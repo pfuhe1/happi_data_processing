@@ -402,6 +402,7 @@ if __name__=='__main__':
 	elif host =='silurian.ggy.bris.ac.uk':
 		basepath = '/export/silurian/array-01/pu17449/happi_data/'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
+		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 4
 	elif host =='happi.ggy.bris.ac.uk':
@@ -413,7 +414,8 @@ if __name__=='__main__':
 	elif host =='anthropocene.ggy.bris.ac.uk':
 		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
 		models = ['NorESM1-HAPPI','MIROC5','CAM4-2degree','ECHAM6-3-LR','CanAM4','HadAM3P','CAM5-1-2-025degree']
-		models = ['CanAM4']
+		experiments = ['All-Hist','Plus15-Future','Plus20-Future']
+		#models = ['CanAM4']
 		#basepath = '/export/anthropocene/array-01/pu17449/happi_data_extra/'
 		#models = ['HadRM3P-SAS50']
 		
@@ -470,15 +472,15 @@ if __name__=='__main__':
 #	models = ['CMIP5']
 #	experiments = ['historical','slice15','slice20']
 #	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily_regrid'
-#	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily_regrid/'
-#	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
-#	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'
+##	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily_regrid/'
+##	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
+##	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'
 
 	# PROCESS CMIP slices
-	models = ['CMIP5']
-	experiments = ['historical','slice15','slice20']
-	basepath = '/work/scratch-nompiio/pfu599/CMIP5_slices/subset_daily_all/'
-	outdir = '/work/scratch-nompiio/pfu599/CMIP5_slices/indices'
+	#models = ['CMIP6']
+	#experiments = ['historical','slice15','slice20']
+	#basepath = '/work/scratch-nompiio/pfu599/CMIP6_slices/subset_daily_all/'
+	#outdir = '/work/scratch-nompiio/pfu599/CMIP6_slices/indices'
 
 	# Process UKCP18 slices
 	#models = ['UKCP18-global']

@@ -42,8 +42,9 @@ if __name__=='__main__':
 	if host=='anthropocene.ggy.bris.ac.uk':
 		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
 		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
-		#models = ['CMIP5','CESM-CAM5']
-		models = ['CanESM2','CanAM4']
+		#models = ['CMIP5-1permodel','CESM-CAM5']
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
+		#models = ['CanESM2','CanAM4']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
@@ -83,7 +84,7 @@ if __name__=='__main__':
 			experiments = ['historical','1pt5degC','2pt0degC']
 			scale = 1000.
 		# CMIP5 or Helix models
-		elif model == 'CMIP5' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk': 
+		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk': 
 			experiments = ['historical','slice15','slice20']
 			scale = 1.
 		else:

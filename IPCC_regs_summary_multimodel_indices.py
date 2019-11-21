@@ -25,6 +25,7 @@ if __name__=='__main__':
 	#######################################
 	# Variables to set
 
+	override = True
 	data_freq = 'N/A'
 	var = 'pr'
 	if len(argv)>1:
@@ -58,8 +59,8 @@ if __name__=='__main__':
 		markers = ['s','.','+','x','2','1']
 		numthreads = 12
 	elif host=='anthropocene.ggy.bris.ac.uk':
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data2.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary2.pkl'
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		summary_name = 'HAPPI'
 		numthreads = 12
@@ -95,7 +96,7 @@ if __name__=='__main__':
 	pct_ch_arr = {}
 	pct_ch_up = {}
 	pct_ch_down = {}
-	for reg in region_masks[model].keys():
+	for reg in regs:
 		pct_ch_arr[reg] = np.zeros([len(models),len(scenarios)])
 		pct_ch_up[reg] = np.zeros([len(models),len(scenarios)])
 		pct_ch_down[reg] = np.zeros([len(models),len(scenarios)])
@@ -146,18 +147,23 @@ if __name__=='__main__':
 			print(reg)
 			summary[reg]={}
 		# If the summary has not already been created for this ensemble
-		if not summary[reg].has_key(summary_name):
+		if not summary[reg].has_key(summary_name) or override:
 			summary[reg][summary_name]={}
 			for d,scen in enumerate(scenarios):
 				# Use random effect meta analysis 
 				model_spr = pct_ch_arr[reg][:,d].std()**2
 				sample_var = ((pct_ch_up[reg][:,d]-pct_ch_down[reg][:,d])/3.2)**2 # Assume normal distribution, 5-95% range is 3.2 times std
-				model_w = 1./(model_spr + sample_var[z])
+				model_w = 1./(model_spr + sample_var[:])
 		
 				best_est = (model_w*pct_ch_arr[reg][:,d]).sum()/model_w.sum()
 				best_err = 1.6*(1/ model_w.sum())**0.5
 
 				summary[reg][summary_name][scen]=[best_est-best_err,best_est,best_est+best_err]
+				if reg == 'SAS_land' and d==2:
+					print('Debug, SAS_land, 1p5vs2')
+					print('debug: model best',pct_ch_arr[reg][:,d])
+					print('debug: mode weights',model_w)
+					print('debug: best',best_est,best_err)
 				
 	############################################################################			
 	# write out data
