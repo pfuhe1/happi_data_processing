@@ -65,7 +65,8 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=8):
 if __name__=='__main__':
 
 	#basepath = '/group_workspaces/jasmin2/mohc_shared/users/sarahshannon/helix/'
-	basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/MO/HadGEM3/rcp85/day/'
+	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/MO/HadGEM3/rcp85/day/'
+	basepath = '/gws/nopw/j04/mohc_shared/users/dmhg/helix/MO/HadGEM3/rcp85/day/'
 	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/day/atmos/'
 	outpath = '/work/scratch/pfu599/helix_data'
 	experiments = ['historical','slice15','slice20']

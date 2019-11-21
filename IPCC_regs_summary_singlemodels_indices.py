@@ -25,6 +25,7 @@ if __name__=='__main__':
 	#######################################
 	# Variables to set
 
+	override = True
 	data_freq = 'N/A'
 	var = 'pr'
 	if len(argv)>1:
@@ -46,9 +47,10 @@ if __name__=='__main__':
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
-		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_helixmodels_summary.pkl'
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_jasmin_summary.pkl'
 		numthreads = 8
-		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
+		#models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
+		models = ['CMIP5-subset','CMIP5-regrid','CMIP5-1permodel']
 
 	#######################################
 	# load pickle files
@@ -96,7 +98,7 @@ if __name__=='__main__':
 			if not summary.has_key(reg):
 				summary[reg]={}
 			# Create summary for this model if doesnt exist already
-			if not summary[reg].has_key(model):
+			if not summary[reg].has_key(model) or override:
 				summary[reg][model]={}
 
 				# Flatten data for this model/region into 'seas_data' array

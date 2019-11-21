@@ -59,7 +59,8 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,domain = 'atmos
 
 if __name__=='__main__':
 
-	basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/'
+	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/'
+	basepath = '/gws/nopw/j04/mohc_shared/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/'
 	outpath = '/work/scratch/pfu599/helix_data'
 	experiments = ['historical','slice15','slice20']
 	models = ['EC-EARTH3-HR']

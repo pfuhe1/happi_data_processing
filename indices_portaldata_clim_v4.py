@@ -336,8 +336,10 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		cmd_ret = {}
 		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)
 #		runs = get_runs_all(model,experiment,basepath,data_freq,var,domain=domain)[:100] # Limit to 100 ensemble members
+		print('got runs:',len(runs))
 		for runpath in runs:
 			run = os.path.basename(runpath)
+			print(run)
 			if os.path.isdir(runpath):
 				# Add .nc to the end if run is a dir
 				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run+'_yrly.nc')
@@ -351,6 +353,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 				#process(runpath,run_whole)
 			else: # file was previously created
 				# Add this run to list
+				print('outfile already exists,skipping',run_whole)
 				run_averages.append(run_whole)
 
 		# close the pool and make sure the processing has finished
@@ -417,9 +420,10 @@ if __name__=='__main__':
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 16
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
-	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+	elif host[:6] == 'jasmin' or host[-9:] == '.rl.ac.uk':
 		basepath = '/work/scratch/pfu599/helix_data/SWL_data/'
-		outdir = '/work/scratch/pfu599/helix_data/processed_data/'
+		#outdir = '/work/scratch/pfu599/helix_data/processed_data/'
+		outdir = '/home/users/pfu599/data/processed_data_helix'
 		numthreads = 8
 		# NOTE: lowercase models are bias corrected, upper case are raw model data
 		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
@@ -427,7 +431,7 @@ if __name__=='__main__':
 		
 
 
-	experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
+	#experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
 	timespan = {'All-Hist':'2006-01-01,2015-12-31','Plus15-Future':'2106-01-01,2115-12-31','Plus20-Future':'2106-01-01,2115-12-31'}
 
 	#var = 'mrro'
@@ -471,10 +475,10 @@ if __name__=='__main__':
 #	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'
 
 	# PROCESS CMIP slices
-	models = ['CMIP6']
+	models = ['CMIP5']
 	experiments = ['historical','slice15','slice20']
-	basepath = '/work/scratch-nompiio/pfu599/CMIP6_slices/subset_daily_all/'
-	outdir = '/work/scratch-nompiio/pfu599/CMIP6_slices/indices'
+	basepath = '/work/scratch-nompiio/pfu599/CMIP5_slices/subset_daily_all/'
+	outdir = '/work/scratch-nompiio/pfu599/CMIP5_slices/indices'
 
 	# Process UKCP18 slices
 	#models = ['UKCP18-global']

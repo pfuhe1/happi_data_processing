@@ -30,6 +30,7 @@ if __name__=='__main__':
 	# Variables to set 
 
 	data_freq = 'N/A'
+	override = True 
 	var = 'pr'
 	if len(argv)>1:
 		index = argv[1].strip()
@@ -79,7 +80,8 @@ if __name__=='__main__':
 		mask_pkl = '/home/users/pfu599/pkl/IPCCreg_masks.pkl'
 		polygons_pkl = '/home/users/pfu599/pkl/IPCCreg_polygons.pkl'
 		numthreads = 8
-		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-1permodel','UKCP18-global']
+		#models = models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
+		models = ['CMIP5-regrid','CMIP5-subset','CMIP5-1permodel']
 	else:
 		raise Exception('ERROR, Unknown host: '+host)
 
@@ -173,7 +175,7 @@ if __name__=='__main__':
 			data_masked[model] = {}
 		for experiment in experiments:
 			file_pattern = 'indices_data/'+model+'/'+experiment+'/'+index+'/*_yrly.nc'
-			if not experiment in data_masked[model]:
+			if not experiment in data_masked[model] or override:
 				data_masked[model][experiment] = get_basindata(model,experiment,var,basepath,data_freq,numthreads=numthreads,masks=region_masks[model],file_pattern=file_pattern)
 				print(experiment,data_masked[model][experiment].keys())
 
