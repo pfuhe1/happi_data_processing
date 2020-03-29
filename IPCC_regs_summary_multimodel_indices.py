@@ -140,6 +140,19 @@ if __name__=='__main__':
 	############################################################################
 	# Now create meta analysis / multi model summary:
 
+	def meta_analysis(best,up,down,axis=None):
+		# Spread across best estimates
+		model_spr  = best.std(axis=axis)**2
+		# Variance for each individual estimate (based on 5-90% sampling uncertainty)
+		sample_var = ((up-down)/3.2)**2 # Assume normal distribution, 5-95% range is 3.2 times std
+		model_w = 1./(model_spr + sample_var[:])
+		# Best estimate
+		best_est = (model_w*best).sum(axis=axis)/model_w.sum(axis=axis)
+		# Error from best estimate to 5-95% bounds
+		# Assumes normal distribution
+		best_err = 1.6*(1/ model_w.sum(axis=axis))**0.5
+		return best_est-best_err,best_est,best_est+best_err
+
 	print('Calculating multi model summary data')
 	for reg in regs:
 		# Initialise summary dictionary

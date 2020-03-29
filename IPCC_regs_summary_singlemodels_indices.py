@@ -43,15 +43,15 @@ if __name__=='__main__':
 		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
 		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
 		#models = ['CMIP5-1permodel','CESM-CAM5']
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
-		#models = ['CanESM2','CanAM4']
+		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE']
+		models = ['CanESM2']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
 		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_jasmin_summary.pkl'
 		numthreads = 8
 		#models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
-		models = ['CMIP5-subset','CMIP5-regrid','CMIP5-1permodel']
+		#models = ['CMIP5-subset','CMIP5-regrid','CMIP5-1permodel']
 
 	#######################################
 	# load pickle files
@@ -80,11 +80,11 @@ if __name__=='__main__':
 		print('\nLoading Model:',model)
 
 		# Set experiments
-		if model =='CESM-CAM5':
+		if model =='CESM-CAM5' or model=='CESM-CAM5-LW':
 			experiments = ['historical','1pt5degC','2pt0degC']
 			scale = 1000.
 		# CMIP5 or Helix models
-		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk': 
+		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or model == 'CESM-CAM5-LE': 
 			experiments = ['historical','slice15','slice20']
 			scale = 1.
 		else:

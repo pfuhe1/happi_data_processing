@@ -30,7 +30,7 @@ if __name__=='__main__':
 	# Variables to set 
 
 	data_freq = 'N/A'
-	override = True 
+	override = True
 	var = 'pr'
 	if len(argv)>1:
 		index = argv[1].strip()
@@ -67,9 +67,9 @@ if __name__=='__main__':
 		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
 		mask_pkl = '/export/anthropocene/array-01/pu17449/pkl/IPCCreg_masks2.pkl'
 		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
-		polygons_pkl = '/export/anthropocene/array-01/pu17449/pkl/IPCCreg_polygons.pkl'
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5','CMIP5-1permodel']
-		#models = ['CanAM4']
+		polygons_pkl = '/export/anthropocene/array-01/pu17449/pkl/IPCCreg_polygons_closed.pkl'
+		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5','CMIP5-1permodel','CESM-CAM5-LW','CESM-CAM5-LE']
+		models = ['CESM-CAM5-LE']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		shapefile = '/home/users/pfu599/data/shapefiles/referenceRegions.shp'
@@ -78,10 +78,11 @@ if __name__=='__main__':
 		basepath = '/work/scratch-nompiio/pfu599/timeslice_data/'
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
 		mask_pkl = '/home/users/pfu599/pkl/IPCCreg_masks.pkl'
-		polygons_pkl = '/home/users/pfu599/pkl/IPCCreg_polygons.pkl'
+		polygons_pkl = '/home/users/pfu599/pkl/IPCCreg_polygons_closed.pkl'
 		numthreads = 8
 		#models = models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
-		models = ['CMIP5-regrid','CMIP5-subset','CMIP5-1permodel']
+		#models = ['CMIP5-regrid','CMIP5-subset','CMIP5-1permodel']
+		models = []
 	else:
 		raise Exception('ERROR, Unknown host: '+host)
 
@@ -118,9 +119,9 @@ if __name__=='__main__':
 		print(model)
 
 		# Set experiments
-		if model =='CESM-CAM5':
-			experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
-		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+		if model =='CESM-CAM5' or model=='CESM-CAM5-LW':
+			experiments = ['historical','1pt5degC','2pt0degC']#,'slice15','slice20']
+		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or model=='CESM-CAM5-LE':
 			experiments = ['historical','slice15','slice20']
 		else:
 			experiments = ['All-Hist','Plus15-Future','Plus20-Future']
