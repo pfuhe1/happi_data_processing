@@ -81,8 +81,7 @@ if __name__=='__main__':
 		polygons_pkl = '/home/users/pfu599/pkl/IPCCreg_polygons_closed.pkl'
 		numthreads = 8
 		#models = models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
-		#models = ['CMIP5-regrid','CMIP5-subset','CMIP5-1permodel']
-		models = []
+		models = ['CMIP5-subset','CMIP6-subset','UKCP18-hadgem']
 	else:
 		raise Exception('ERROR, Unknown host: '+host)
 

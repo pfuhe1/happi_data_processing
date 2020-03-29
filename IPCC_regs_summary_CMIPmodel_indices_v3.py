@@ -11,27 +11,37 @@
 
 import numpy as np
 import pickle
-import glob,os,socket,sys
+import glob,os,socket,sys,argparse
+from scipy import stats
+
 
 home = os.environ.get('HOME')
 argv = sys.argv
 
 # Import bootstrapping routine
 sys.path.append(os.path.join(home,'src/happi_analysis/HAPPI_plots'))
-from bootstrapping import bootstrap_mean_diff
+from bootstrapping import bootstrap_mean_diff,bootstrap_mean_diff_all
 
 if __name__=='__main__':
 
 	#######################################
 	# Variables to set
 
-	override = True
-	data_freq = 'N/A'
-	var = 'pr'
-	if len(argv)>1:
-		index = argv[1].strip()
-	else:
-		index = 'RXx5day'
+	parser = argparse.ArgumentParser('Script to calculate summary statistics from vales of indices for IPCC AR5 regions from CMIP datasets. Split up results by model')
+	parser.add_argument('-o','--override', default=False,action='store_true',help = 'Flag to override existing data or skip if an exeperiment has already been processed')
+	parser.add_argument('-i','--index',default='RXx5day',help = 'index to process e.g. RXx5day,pryrmean')
+	parser.add_argument('-d','--dataset',default = 'CMIP6-subset',help = 'CMIP datset to process [CMIP5-subset,CMIP6-subset]')
+	parser.add_argument('-n','--num_threads',default = '8',type=int,help = 'Number of processes to use for parallel processing')
+	args = parser.parse_args()
+	print(args)
+
+	# Set variables from arguments
+	override = args.override
+	index = args.index	
+	dataset = args.dataset
+	numthreads = args.num_threads
+
+	# Set other variables
 	scenarios = ['1.5$^{\circ}$C - Hist','2$^{\circ}$C - Hist','2$^{\circ}$C - 1.5$^{\circ}$C']
 
 	
@@ -39,38 +49,13 @@ if __name__=='__main__':
 	# 	Paths/Variables  dependent on host/machine
 
 	host=socket.gethostname()
-	if host=='triassic.ggy.bris.ac.uk':
-		basepath='/export/triassic/array-01/pu17449/happi_data_decade/'
-		pkl_dir = '/export/silurian/array-01/pu17449/pkl_data/'
-		models = ['CAM5-1-2-025degree']
-		numthreads = 5
-	elif host =='silurian.ggy.bris.ac.uk':
-		basepath = '/export/silurian/array-01/pu17449/happi_data/'
-		basin_path='/home/bridge/pu17449/src/happi_analysis/river_basins/basin_files/'
-		pkl_dir = '/export/silurian/array-01/pu17449/pkl_data/'
-		models = ['CESM-CAM5','NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
-		markers = ['s','.','+','x','2','1']
-		numthreads = 4
-	elif host=='happi.ggy.bris.ac.uk':
-		basepath = '/data/scratch/pu17449/happi_processed/'
-		basin_path='/home/pu17449/happi_analysis/river_basins/basin_files/'
-		pkl_dir = '/data/scratch/pu17449/pkl_data/'
-		models = ['CESM-CAM5','NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
-		markers = ['s','.','+','x','2','1']
-		numthreads = 12
-	elif host=='anthropocene.ggy.bris.ac.uk':
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
-		summary_name = 'HAPPI'
-		numthreads = 12
-	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
-		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
+	if host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+		data_pkl = '/home/users/pfu599/pkl/'+dataset+'models_'+index+'_IPCCregs.pkl'
+		cmip_summary_pkl = '/home/users/pfu599/pkl/'+dataset+'models_'+index+'_IPCCregs_jasmin_summary.pkl'
 		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_jasmin_summary.pkl'
-		numthreads = 8
-		#models = ['ec-earth3-hr','hadgem3']#,'EC-EARTH3-HR','HadGEM3']
-		models = ['EC-EARTH3-HR','HadGEM3']
-		summary_name = 'HELIX'
+		summary_name = dataset+'-weighted3'
+	else:
+		raise Exception('Error, this script has only been set up to run on JASMIN')
 		
 	#######################################
 	# load pickle files
@@ -80,6 +65,13 @@ if __name__=='__main__':
 			summary = pickle.load(f_pkl)
 	else:
 		summary = {}
+
+	if os.path.exists(cmip_summary_pkl):
+		with open(cmip_summary_pkl,'rb') as f_pkl:
+			cmip_summary = pickle.load(f_pkl)
+	else:
+		cmip_summary = {}
+
 
 	if os.path.exists(data_pkl):
 		with open(data_pkl,'rb') as f_pkl:
@@ -92,15 +84,26 @@ if __name__=='__main__':
 	regs = data_masked.values()[0].values()[0].keys()
 	print('regions',regs)
 
+	# quick quality control:
+	for model,modeldata in data_masked.items():
+		if len(modeldata)<3:
+			del(data_masked[model])
+
+	# Get models
+	models = data_masked.keys()
+
+
 	###########################################################################
 	# Initialise arrays for summary statistics
 	pct_ch_arr = {}
 	pct_ch_up = {}
 	pct_ch_down = {}
+	sample_data = {}
 	for reg in regs:
 		pct_ch_arr[reg] = np.zeros([len(models),len(scenarios)])
 		pct_ch_up[reg] = np.zeros([len(models),len(scenarios)])
 		pct_ch_down[reg] = np.zeros([len(models),len(scenarios)])
+		sample_data[reg] = np.zeros([len(models),len(scenarios),1000])
 
 	#########################################################################
 	# Load data
@@ -130,29 +133,31 @@ if __name__=='__main__':
 				# calculate bootstrapped error for mean:
 				print 'datahape',seas_data[0].shape,seas_data[1].shape
 				if d!=2: # 2deg and 1.5deg vs Hist
-					pct_change = bootstrap_mean_diff(seas_data[d+1],seas_data[0])
+					data1 = seas_data[d+1]
+					data2 = seas_data[0]
 				else: # 2deg vs 1.5deg 
-					pct_change = bootstrap_mean_diff(seas_data[d],seas_data[d-1]) 
-				pct_ch_arr[reg][z,d]=pct_change[1]
-				pct_ch_up[reg][z,d]=pct_change[2]
-				pct_ch_down[reg][z,d]=pct_change[0]
+					data1 = seas_data[d]
+					data2 = seas_data[d-1]
+
+				sample_vals = bootstrap_mean_diff_all(data1,data2,samples=1000)
+				rangemin=stats.scoreatpercentile(sample_vals, 5)
+				rangemidd=(data1.mean()-data2.mean())/data2.mean()*100.
+				rangemax=stats.scoreatpercentile(sample_vals, 95)
+
+				pct_ch_down[reg][z,d]=rangemin
+				pct_ch_arr[reg][z,d]=rangemidd
+				pct_ch_up[reg][z,d]=rangemax
+				sample_data[reg][z,d,:] = sample_vals
 				#print model,scen,'mean',pct_change
+				# Initialise cmip_summary dictionary then set values
+				if not reg in cmip_summary:
+					cmip_summary[reg]={}
+				if not model in cmip_summary[reg]:
+					cmip_summary[reg][model]={}
+				cmip_summary[reg][model][scen] = [rangemin,rangemidd,rangemax]
 
 	############################################################################
 	# Now create meta analysis / multi model summary:
-
-	def meta_analysis(best,up,down,axis=None):
-		# Spread across best estimates
-		model_spr  = best.std(axis=axis)**2
-		# Variance for each individual estimate (based on 5-90% sampling uncertainty)
-		sample_var = ((up-down)/3.2)**2 # Assume normal distribution, 5-95% range is 3.2 times std
-		model_w = 1./(model_spr + sample_var[:])
-		# Best estimate
-		best_est = (model_w*best).sum(axis=axis)/model_w.sum(axis=axis)
-		# Error from best estimate to 5-95% bounds
-		# Assumes normal distribution
-		best_err = 1.6*(1/ model_w.sum(axis=axis))**0.5
-		return best_est-best_err,best_est,best_est+best_err
 
 	print('Calculating multi model summary data')
 	for reg in regs:
@@ -165,9 +170,12 @@ if __name__=='__main__':
 			summary[reg][summary_name]={}
 			for d,scen in enumerate(scenarios):
 				# Use random effect meta analysis 
-				model_spr = pct_ch_arr[reg][:,d].std()**2
+				model_spr1 = pct_ch_arr[reg][:,d].std()**2
+				model_spr3 = sample_data[reg][:,d,:].std(axis=0).mean()**2 # average model spread across bootstraps (weighted3)
+				model_spr4 = sample_data[reg][:,d,:].std()**2 # spread across all bootstraps (weighted4)
+				print('Debug',model_spr1,model_spr3,model_spr4)
 				sample_var = ((pct_ch_up[reg][:,d]-pct_ch_down[reg][:,d])/3.2)**2 # Assume normal distribution, 5-95% range is 3.2 times std
-				model_w = 1./(model_spr + sample_var[:])
+				model_w = 1./(model_spr3 + sample_var[:])
 		
 				best_est = (model_w*pct_ch_arr[reg][:,d]).sum()/model_w.sum()
 				best_err = 1.6*(1/ model_w.sum())**0.5
@@ -183,4 +191,8 @@ if __name__=='__main__':
 	# write out data
 	with open(summary_pkl,'wb') as f_pkl:
 		pickle.dump(summary,f_pkl,-1)
+
+	# write out data
+	with open(cmip_summary_pkl,'wb') as f_pkl:
+		pickle.dump(cmip_summary,f_pkl,-1)
 

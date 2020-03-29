@@ -3,7 +3,7 @@
 # Version 4 to only select 10 years (a few runs are longer)
 # 
 import os,glob,tempfile,shutil,socket
-import subprocess
+import sys,subprocess
 import multiprocessing
 from get_runs import get_runs_all
 from netCDF4 import MFDataset,Dataset
@@ -430,6 +430,26 @@ if __name__=='__main__':
 		# NOTE: lowercase models are bias corrected, upper case are raw model data
 		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 		experiments = ['historical','slice15','slice20']
+
+		# Override defaults by command line:
+		if len(sys.argv)>1:
+			if sys.argv[1]=='CMIP6':
+				# PROCESS CMIP slices
+				models = ['CMIP6']
+				experiments = ['historical','slice15','slice20']
+				basepath = '/work/scratch-nompiio/pfu599/CMIP6_slices/subset_daily_all/'
+				outdir = '/work/scratch-nompiio/pfu599/CMIP6_slices/indices'
+			elif sys.argv[1] == 'CMIP5':
+				models = ['CMIP5']
+				experiments = ['historical','slice15','slice20']
+				basepath = '/work/scratch-nompiio/pfu599/CMIP5_slices/subset_daily_all/'
+				outdir = '/work/scratch-nompiio/pfu599/CMIP5_slices/indices'
+			elif sys.argv[1] =='UKCP18':
+				# Process UKCP18 slices
+				models = ['UKCP18-global']
+				experiments = ['historical','slice15','slice20']
+				basepath = '/work/scratch-nompiio/pfu599/UKCP18_slices/subset_daily_all/'
+				outdir = '/work/scratch-nompiio/pfu599/UKCP18_slices/indices'
 		
 
 
@@ -476,17 +496,7 @@ if __name__=='__main__':
 ##	basepath = '/export/silurian/array-01/pu17449/CMIP5_slices/subset_daily'
 ##	outdir = '/export/silurian/array-01/pu17449/CMIP5_slices/indices_daily'
 
-	# PROCESS CMIP slices
-	#models = ['CMIP6']
-	#experiments = ['historical','slice15','slice20']
-	#basepath = '/work/scratch-nompiio/pfu599/CMIP6_slices/subset_daily_all/'
-	#outdir = '/work/scratch-nompiio/pfu599/CMIP6_slices/indices'
 
-	# Process UKCP18 slices
-	#models = ['UKCP18-global']
-    #    experiments = ['historical','slice15','slice20']
-    #    basepath = '/work/scratch-nompiio/pfu599/UKCP18_slices/subset_daily_all/'
-    #    outdir = '/work/scratch-nompiio/pfu599/UKCP18_slices/indices'
 
 	for model in models:
 		for experiment in experiments:

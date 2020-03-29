@@ -35,7 +35,7 @@ def norESM_histruns(basepath,model,experiment,var,data_freq,domain):
 ######################################################################
 
 def CMIP5_runs(basepath,experiment,data_freq,var):
-	runpath = os.path.join(basepath,var,experiment,var+'_'+data_freq+'_*.nc')
+	runpath = os.path.join(basepath,var,experiment,var+'_*'+data_freq+'_*.nc')
 	print('CMIP path',runpath)
 	return glob.glob(runpath)
 

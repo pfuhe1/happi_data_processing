@@ -59,7 +59,6 @@ def load_basin_data_weighted(runpath,model,experiment,var,basin_masks,lat):
 	return basin_timeseries
 
 def load_basin_data(runpath,model,experiment,var,basin_masks,lat):
-	print(runpath)
 	basin_timeseries = {}
 	if os.path.isdir(runpath):
 		run_files=glob.glob(runpath+'/*.nc')
@@ -107,10 +106,12 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		if file_pattern is None:
 			print(domain)
 			runs = getruns(model,experiment,basepath,data_freq,var,domain=domain)
-		else:
+		elif type(file_pattern) == type(''):
 			fpath=os.path.join(basepath,file_pattern)
 			print(fpath)
 			runs = glob.glob(fpath)
+		elif type(file_pattern) == type([]): # file pattern is a list of files
+			runs = file_pattern
 		
 		# Load grid information
 		if os.path.isdir(runs[0]):
@@ -154,7 +155,6 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		# Loop over runs
 		print('loading data...')
 		for i,runpath in enumerate(runs):
-			run = os.path.basename(runpath)
 			# Add the process to the pool
 			result_all[i]  = pool.apply_async(load_basin_data_weighted,(runpath,model,experiment,var,masks,lat))
 			# option when not using multithreading pool:
@@ -179,13 +179,14 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 			except Exception as e:
 				print('Error processing file',runpath)
 				print(e)
+				raise
 
 		# convert lists to arrays
 		print('finalising data')
 		for basin in masks.keys():
 			outshape0 = len(data_all[basin])
-			outshape1 = len(data_all[basin][3]) # Hack to work for CAM5, TODO change to maximum of these values (or just 10)
-			#outshape1 = 21 #Hack for CMIP5
+			#outshape1 = len(data_all[basin][3]) # Hack to work for CAM5, TODO change to maximum of these values (or just 10)
+			outshape1 = 21 #Hack for CMIP5
 			outarr = np.ma.zeros([outshape0,outshape1])
 			for i,ens in enumerate(data_all[basin]):
 				#print 'ens',i,len(data_all[basin][i])
@@ -203,6 +204,107 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 		print('Error in script: ')
 		print(e)
 		raise
+
+#################################################################################################
+
+# Process all the data for the particular model, experiment and variable
+def get_basindata_dict(model,experiment,var,basepath,data_freq,ens_loc,numthreads=1,masks=None,file_pattern=None,domain='atmos',getruns=get_runs):
+
+	try:
+		# Create pool of processes to process runs in parallel. 
+		pool = multiprocessing.Pool(processes=numthreads)
+
+		# Get list of runs
+		if file_pattern is None:
+			print(domain)
+			runs = getruns(model,experiment,basepath,data_freq,var,domain=domain)
+		elif type(file_pattern) == type(''):
+			fpath=os.path.join(basepath,file_pattern)
+			print(fpath)
+			runs = glob.glob(fpath)
+		elif type(file_pattern) == type([]): # file pattern is a list of files
+			runs = file_pattern
+		
+		# Load grid information
+		if os.path.isdir(runs[0]):
+			f_template = glob.glob(runs[0]+'/*.nc')[0]
+		else:
+			f_template = runs[0]
+		print('reading grid from',f_template)
+		with Dataset(f_template,'r') as tmp:
+			if 'lat' in tmp.variables and 'lon' in tmp.variables:
+				lat = tmp.variables['lat'][:]
+				lon = tmp.variables['lon'][:]
+			elif 'latitude' in tmp.variables and 'longitude' in tmp.variables:
+				lat = tmp.variables['latitude'][:]
+				lon = tmp.variables['longitude'][:]
+			elif 'latitude0' in tmp.variables and 'longitude0' in tmp.variables:
+				lat = tmp.variables['latitude0'][:]
+				lon = tmp.variables['longitude0'][:]
+			else:
+				raise Exception('Error, cant determin lat and lon variables: '+str(tmp.variables.keys()))
+
+		if masks is  None:
+			print('calculating 2D lat/lon arrays')
+			# Create 2D arrays of lon and lat
+			nlat = len(lat)
+			nlon = len(lon)
+			lonxx,latyy=np.meshgrid(lon,lat)
+			lonxx[lonxx>180]=lonxx[lonxx>180]-360
+			points = np.vstack((lonxx.flatten(),latyy.flatten())).T
+		
+			# Load basin masks
+			masks = {}
+			print('loading basin masks...')
+			for basin_file in glob.glob('/home/bridge/pu17449/src/happi_analysis/river_basins/basin_files/*.txt'):
+				polygons = load_polygons(basin_file)
+				basin_name = os.path.basename(basin_file)[:-10].replace('_',' ')
+				print(basin_name)
+				masks[basin_name]=create_mask(polygons,points,nlat,nlon)
+
+		result_all = {}
+
+		# Loop over runs
+		print('loading data...')
+		for i,runpath in enumerate(runs):
+			run = os.path.basename(runpath)
+			ens = run.split('_')[ens_loc]
+			# Add the process to the pool
+			result_all[ens]  = pool.apply_async(load_basin_data_weighted,(runpath,model,experiment,var,masks,lat))
+			# option when not using multithreading pool:
+			#result_all[i] = load_basin_data_weighted(runpath,model,experiment,var,masks,lat)
+
+		# close the pool and make sure the processing has finished
+		pool.close()
+		pool.join()
+
+		print('\ncollecting data...')
+		data_all = {}
+#		for tmp in result_all: # option when not using multithreading
+		for ens,result in result_all.items(): # comment out if not using multithreading pool
+			try:
+				tmp = result.get(timeout=600.) # comment out if not using multithreading pool
+				# Put data from each basin into different list
+				for basin,data in tmp.iteritems():
+					if basin in data_all:
+						data_all[basin][ens] = data
+					else:
+						data_all[basin] = {ens:data}
+			except Exception as e:
+				print('Error processing file',runpath)
+				print(e)
+				raise
+
+		return data_all
+
+	except Exception as e:
+		print('Error in script: ')
+		print(e)
+		raise
+
+
+#############################################################################################
+
 
 if __name__=='__main__':
 
