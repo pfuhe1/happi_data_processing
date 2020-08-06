@@ -161,15 +161,15 @@ def process_run_yrmax(runpath,run_whole,unit_conv,timesel):
 	elif len(run_files)==1:
 		# Only one file, calculate yearmax
 		# CDO command
-		cdo_cmd = "cdo yearmax "+timesel + run_files[0] + " " + run_whole
+		cdo_cmd = ["cdo","yearmax"]+timesel + [run_files[0],run_whole]
 		print(cdo_cmd)
-		os.system(cdo_cmd)
+		return subprocess.call(cdo_cmd)
 	else: 
 		# calculate yearmax and concatenate files
 		# CDO command
-		cdo_cmd = "cdo -L yearmax "+timesel+ "-cat '" +list_to_string(run_files) + "' " + run_whole
+		cdo_cmd = ["cdo","-L","yearmax"]+timesel+ ["-cat",' '.join(run_files),run_whole]
 		print(cdo_cmd)
-		os.system(cdo_cmd)
+		return subprocess.call(cdo_cmd)
 
 # Process data for a single ensemble member/ run
 def process_run_yrmean(runpath,run_whole,unit_conv,timesel):
@@ -293,18 +293,26 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		# set specific 'process' function to call
 		if index == 'raindays':
 			process = process_run_raindays
+			data_freq = 'day' # data_freq must be daily for this index
 		elif index == 'Rx5day':
+			data_freq = 'day' # data_freq must be daily for this index
 			process = process_run_Rx5day
 		elif index == 'RXx5day':
 			process = process_run_RXx5day
+			data_freq = 'day' # data_freq must be daily for this index
 		elif index == 'dryspell':
 			process = process_run_dryspell
+			data_freq = 'day' # data_freq must be daily for this index
 		elif index == 'Tx3day':
 			process = process_run_Tx3day
+			data_freq = 'day' # data_freq must be daily for this index
 		elif index == 'yrmean':
 			#rename index
 			index = var+'yrmean'
 			process = process_run_yrmean
+		elif index == 'RXx1day': # RXx1day is just yearmax for daily data
+			process = process_run_yrmax
+			data_freq = 'day' # data_freq must be daily for this index
 		elif index == 'yrmax':
 			process = process_run_yrmax
 			if data_freq == 'day':
@@ -350,7 +358,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			if not os.path.exists(run_whole):
 				#raise Exception('Debug, not processing runs')
 				cmd_ret[run_whole] = pool.apply_async(process,(runpath,run_whole,unit_conv,timesel))
-				#process(runpath,run_whole)
+				#cmd_ret[run_whole] = process(runpath,run_whole,unit_conv,timesel)
 			else: # file was previously created
 				# Add this run to list
 				print('outfile already exists,skipping',run_whole)
@@ -363,6 +371,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		# Loop through runs and add to list of successful output files		
 		for run_whole,result in cmd_ret.items():
 			retcode = result.get(timeout=600.)
+			#retcode = result
 			print(run_whole,retcode)
 			if retcode == 0 and os.path.exists(run_whole): # if the file was produced successfully
 				run_averages.append(run_whole)
@@ -467,7 +476,7 @@ if __name__=='__main__':
 	#data_freq = 'mon'
 	
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
-	indices = ['RXx5day','yrmean']
+	indices = ['RXx5day','RXx1day','yrmean']
 	data_freq = 'day'
 
 
