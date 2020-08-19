@@ -431,34 +431,38 @@ if __name__=='__main__':
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 16
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
-	elif host[:6] == 'jasmin' or host[-9:] == '.rl.ac.uk':
-		basepath = '/work/scratch/pfu599/helix_data/SWL_data/'
-		#outdir = '/work/scratch/pfu599/helix_data/processed_data/'
-		outdir = '/home/users/pfu599/data/processed_data_helix'
-		numthreads = 8
+	elif host[:6] == 'jasmin' or host[-9:] == '.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
+		basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data/'
+		outdir = basepath
+		numthreads = 4 # 16 # For running on the lotus cluster
 		# NOTE: lowercase models are bias corrected, upper case are raw model data
+		#models = ['CMIP5','CMIP6','UKCP18-global','ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 		experiments = ['historical','slice15','slice20']
 
-		# Override defaults by command line:
+		# Override defaults by command line: just run a single model/dataset
 		if len(sys.argv)>1:
-			if sys.argv[1]=='CMIP6':
-				# PROCESS CMIP slices
-				models = ['CMIP6']
-				experiments = ['historical','slice15','slice20']
-				basepath = '/work/scratch-nompiio/pfu599/CMIP6_slices/subset_daily_all/'
-				outdir = '/work/scratch-nompiio/pfu599/CMIP6_slices/indices'
-			elif sys.argv[1] == 'CMIP5':
-				models = ['CMIP5']
-				experiments = ['historical','slice15','slice20']
-				basepath = '/work/scratch-nompiio/pfu599/CMIP5_slices/subset_daily_all/'
-				outdir = '/work/scratch-nompiio/pfu599/CMIP5_slices/indices'
-			elif sys.argv[1] =='UKCP18':
-				# Process UKCP18 slices
-				models = ['UKCP18-global']
-				experiments = ['historical','slice15','slice20']
-				basepath = '/work/scratch-nompiio/pfu599/UKCP18_slices/subset_daily_all/'
-				outdir = '/work/scratch-nompiio/pfu599/UKCP18_slices/indices'
+			#if sys.argv[1]=='CMIP6':
+			#	# PROCESS CMIP slices
+			#	models = ['CMIP6']
+			#	experiments = ['historical','slice15','slice20']
+			#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
+			#	outdir = basepath
+			#elif sys.argv[1] == 'CMIP5':
+			#	models = ['CMIP5']
+			#	experiments = ['historical','slice15','slice20']
+			#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
+			#	outdir = basepath
+			#elif sys.argv[1] =='UKCP18':
+			#	# Process UKCP18 slices
+			#	models = ['UKCP18-global']
+			#	experiments = ['historical','slice15','slice20']
+			#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
+			#	outdir = basepath
+			models = [sys.argv[1]]
+			experiments = ['historical','slice15','slice20']
+			basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data/'
+			outdir = basepath
 		
 
 

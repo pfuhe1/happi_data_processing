@@ -39,7 +39,7 @@ def load_basin_data_weighted(runpath,model,experiment,var,basin_masks,lat):
 			data = f_in.variables[var][:].squeeze()*86400
 	
 	shp = data.shape
-	for bname,basin in basin_masks.iteritems():
+	for bname,basin in basin_masks.items():
 		
 		# Apply basin mask to array (broadcast over time dimension)
 		masked_data = np.ma.masked_array(*np.broadcast_arrays(data,basin))
@@ -76,7 +76,7 @@ def load_basin_data(runpath,model,experiment,var,basin_masks,lat):
 	with MFDataset(run_files,'r') as f_in:
 		data = f_in.variables[var][:].squeeze()*86400
 	shp = data.shape
-	for bname,basin in basin_masks.iteritems():
+	for bname,basin in basin_masks.items():
 		#print bname
 		#print 'shape',shp,basin.shape
 		
@@ -171,7 +171,7 @@ def get_basindata(model,experiment,var,basepath,data_freq,numthreads=1,masks=Non
 			try:
 				tmp = result.get(timeout=600.) # comment out if not using multithreading pool
 				# Put data from each basin into different list
-				for basin,data in tmp.iteritems():
+				for basin,data in tmp.items():
 					if basin in data_all:
 						data_all[basin].append(data)
 					else:
@@ -285,7 +285,7 @@ def get_basindata_dict(model,experiment,var,basepath,data_freq,ens_loc,numthread
 			try:
 				tmp = result.get(timeout=600.) # comment out if not using multithreading pool
 				# Put data from each basin into different list
-				for basin,data in tmp.iteritems():
+				for basin,data in tmp.items():
 					if basin in data_all:
 						data_all[basin][ens] = data
 					else:

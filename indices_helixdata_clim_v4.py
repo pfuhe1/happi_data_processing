@@ -354,7 +354,7 @@ if __name__=='__main__':
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
 		basepath = '/work/scratch/pfu599/helix_data/SWL_data/'
 		outdir = '/work/scratch/pfu599/helix_data/processed_data/'
-		numthreads = 8
+		numthreads = 4
 		# NOTE: lowercase models are bias corrected, upper case are raw model data
 		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 		

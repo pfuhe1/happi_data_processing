@@ -15,7 +15,7 @@ def datestr(year,data_freq):
 
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,basepath,outpath,data_freq,domain = 'atmos'):
-	print model,experiment,var
+	print(model,experiment,var)
 
 	# Loop over runs
 	inruns = os.path.join(basepath,data_freq,domain,var,'*')
@@ -27,11 +27,11 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,domain = 'atmos
 			if ens == 'r0i1p1': # skip r0 (forced by ERA-Interim)
 				continue
 
-	                outpath_runs=os.path.join(outpath,'SWL_data',model,experiment,'est1/v1-0/'+data_freq+'/atmos',var,ens)
-	                if not os.path.exists(outpath_runs):
-        	                os.makedirs(outpath_runs)
+			outpath_runs=os.path.join(outpath,model,experiment,'est1/v1-0/'+data_freq+'/atmos',var,ens)
+			if not os.path.exists(outpath_runs):
+				os.makedirs(outpath_runs)
 			else:
-				print 'path already exists, not making directory',outpath_runs
+				print('path already exists, not making directory',outpath_runs)
 	
 			if experiment == 'historical':
 				swl_year = 2010
@@ -39,7 +39,7 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,domain = 'atmos
 				swl_year = swl_years[experiment][ens]
 			
 			for year in range(swl_year-10,swl_year+11):
-				print year
+				print(year)
 				dates = datestr(year,data_freq)
 				fname = var+'_'+mip_table[data_freq]+'_'+model+'_rcp85_'+ens+'_'+dates+'.nc'
 				infile = os.path.join(runpath,fname)
@@ -47,21 +47,21 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,domain = 'atmos
 				if not os.path.exists(infile):
 					raise Exception('Error, infile doesnt exist: '+infile)
 				if not os.path.exists(outfile):
-					print outfile
+					print(outfile)
 					os.symlink(infile,outfile)
 				else:
-					print 'file exists',outfile
+					print('file exists',outfile)
 				
 
-		except Exception,e:
-			print 'Error in script: '
-			print e
+		except Exception as e:
+			print('Error in script: ')
+			print(e)
 
 if __name__=='__main__':
 
 	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/'
 	basepath = '/gws/nopw/j04/mohc_shared/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/'
-	outpath = '/work/scratch/pfu599/helix_data'
+	outpath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data/'
 	experiments = ['historical','slice15','slice20']
 	models = ['EC-EARTH3-HR']
 

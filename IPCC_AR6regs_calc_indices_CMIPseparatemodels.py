@@ -33,7 +33,7 @@ if __name__=='__main__':
 	parser.add_argument('-o','--override', default=False,action='store_true',help = 'Flag to override existing data or skip if an exeperiment has already been processed')
 	parser.add_argument('-i','--index',default='RXx5day',help = 'index to process e.g. RXx5day,pryrmean')
 	parser.add_argument('-d','--dataset',default = 'CMIP6-subset',help = 'CMIP datset to process [CMIP5-subset,CMIP6-subset]')
-	parser.add_argument('-n','--num_threads',default = '8',type=int,help = 'Number of processes to use for parallel processing')
+	parser.add_argument('-n','--num_threads',default = '16',type=int,help = 'Number of processes to use for parallel processing')
 	args = parser.parse_args()
 	print(args)
 
@@ -54,12 +54,12 @@ if __name__=='__main__':
 
 	host=socket.gethostname()
 	if host[:6] == 'jasmin' or host[-9:] == '.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
-		shapefile = '/home/users/pfu599/data/shapefiles/referenceRegions.shp'
+		shapefile = '/home/users/pfu599/data/shapefiles/reference_regions_AR6/reference_regions_split.shp'
 		landmask_dir = '/home/users/pfu599/data/helix_landfrac'
-		basepath = '/work/scratch-nompiio/pfu599/timeslice_data/'
-		data_pkl = '/home/users/pfu599/pkl/'+dataset+'models_'+index+'_IPCCregs.pkl'
-		mask_pkl = '/home/users/pfu599/pkl/IPCCreg_masks.pkl'
-		polygons_pkl = '/home/users/pfu599/pkl/IPCCreg_polygons.pkl'
+		basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data/'
+		data_pkl = '/home/users/pfu599/pkl/'+dataset+'models_'+index+'_AR6regs.pkl'
+		mask_pkl = '/home/users/pfu599/pkl/AR6reg_masks.pkl'
+		polygons_pkl = '/home/users/pfu599/pkl/AR6reg_polygons.pkl'
 	else:
 		raise Exception('ERROR, Unknown host: '+host)
 
@@ -83,7 +83,7 @@ if __name__=='__main__':
 	# load shapefile data
 
 	print('loading region polygons...')
-	reg_polygons,reg_attrs = load_shapefile_attrs(shapefile,'LAB')
+	reg_polygons,reg_attrs = load_shapefile_attrs(shapefile,'Acronym')
 	with open(polygons_pkl,'wb') as f_pkl:
 		pickle.dump(reg_polygons,f_pkl,-1)
 		pickle.dump(reg_attrs,f_pkl,-1)
@@ -114,24 +114,31 @@ if __name__=='__main__':
 	if not dataset in region_masks:
 		region_masks[dataset]={}
 	results = {}
-	for region,polygons in reg_polygons.iteritems():
+	for region,polygons in reg_polygons.items():
 		if not region in region_masks[dataset]:
 			results[region]=pool.apply_async(create_mask,(polygons,points,nlat,nlon))
 	# close the pool and make sure the processing has finished
 	pool.close()
 	pool.join()
 	print('collecting data...')
-	for region,result in results.iteritems():
-		polymask = result.get(timeout=60.)
-		use = reg_attrs[region]['USAGE']
-		if use == 'all':
-			region_masks[dataset][region[:3]] = polymask
-		elif use == 'land': # Mask out ocean points
-			region_masks[dataset][region[:3]] = np.logical_or(polymask,oceanpoints)
-		elif use == 'land; sea': # create separate masks for land a sea for this region
-			region_masks[dataset][region[:3]+'_land']=np.logical_or(polymask,np.logical_not(oceanpoints))
-			region_masks[dataset][region[:3]+'_sea']=np.logical_or(polymask,oceanpoints)
-
+	for region,result in results.items():
+			polymask = result.get(timeout=60.)
+			use = reg_attrs[region]['Type']
+			if region[-1]=='*':
+				region = region[:-1] # remove * from name
+			if use == 'Land': # Mask out ocean points
+				if region in region_masks[dataset]: # Add to existing mask
+					region_masks[dataset][region] = np.logical_and(region_masks[dataset][region],np.logical_or(polymask,oceanpoints))
+				else:
+					region_masks[dataset][region] = np.logical_or(polymask,oceanpoints)
+			if use == 'Ocean': # Mask out land points
+				if region in region_masks[dataset]: # Add to existing mask
+					region_masks[dataset][region] = np.logical_and(region_masks[dataset][region],np.logical_or(polymask,np.logical_not(oceanpoints)))
+				else:
+					region_masks[dataset][region] = np.logical_or(polymask,np.logical_not(oceanpoints))
+			elif use == 'Land-Ocean': # create separate masks for land a sea for this region
+				region_masks[dataset][region+'_land']=np.logical_or(polymask,np.logical_not(oceanpoints))
+				region_masks[dataset][region+'_sea']=np.logical_or(polymask,oceanpoints)
 	# write out masks
 	with open(mask_pkl,'wb') as f_pkl:
 		pickle.dump(region_masks,f_pkl,-1)
@@ -178,8 +185,8 @@ if __name__=='__main__':
 	with open(data_pkl,'wb') as f_pkl:
 		pickle.dump(data_masked,f_pkl,-1)
 
-	for model,expdata in data_masked.items():
-		print(model)
-		for expt,regdata in expdata.items():
-			print(expt,regdata['WSA'].shape)
+#	for model,expdata in data_masked.items():
+#		print(model)
+#		for expt,regdata in expdata.items():
+#			print(expt,regdata['WSA'].shape)
 

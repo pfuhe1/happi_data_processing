@@ -40,6 +40,15 @@ def CMIP5_runs(basepath,experiment,data_freq,var):
 	return glob.glob(runpath)
 
 ######################################################################
+# New CMIP run path for timeslices (calc by CMIP_get_slices_all.py)
+
+def CMIP_runs(basepath,dataset,experiment,data_freq,var):
+	runpath = os.path.join(basepath,dataset,experiment,data_freq,var,var+'_*'+data_freq+'_*.nc')
+	print('CMIP path',runpath)
+	return glob.glob(runpath)
+
+
+######################################################################
 
 def CESM_runs(basepath,experiment,data_freq,var):
 	print('getting runs for CESM/CanESM large ensembles')
@@ -66,7 +75,7 @@ def get_runs(model,experiment,basepath,data_freq,var,domain='atmos'):
 	elif model=='CanAM4' or model=='ec-earth3-hr' or model == 'hadgem3':
 		run_pattern = 'r*i1p1'
 	elif model == 'CMIP5' or model == 'CMIP6' or model=='UKCP18-global':
-		return CMIP5_runs(basepath,experiment,data_freq,var)
+		return CMIP_runs(basepath,model,experiment,data_freq,var)
 	else: 
 	#Default
 	# model=='MIROC5' or model=='NorESM1-HAPPI' or model=='HadAM3P' or model=='CAM5-1-2-025degree': 
@@ -127,7 +136,7 @@ def get_runs_all(model,experiment,basepath,data_freq,var,domain='atmos'):
 	elif model=='CanAM4' or model.lower()=='ec-earth3-hr' or model.lower() == 'hadgem3':	
 		run_pattern = 'r*i1p1'
 	elif model == 'CMIP5' or model=='CMIP6' or model=='UKCP18-global':
-		return CMIP5_runs(basepath,experiment,data_freq,var)
+		return CMIP_runs(basepath,model,experiment,data_freq,var)
 	else: 
 	#Default
 	# model=='MIROC5' or model=='NorESM1-HAPPI' or model=='HadAM3P' or model=='CAM5-1-2-025degree': 

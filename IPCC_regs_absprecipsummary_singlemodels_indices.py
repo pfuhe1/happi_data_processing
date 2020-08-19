@@ -5,6 +5,8 @@
 # Input data should be first calculated by running IPCC_regs_calc_indices.py script
 #
 # 2. Computes sampling uncertainty ranges for each model/region and saves to a new pkl file
+# 
+# absprecip version calculates changes in mm/day instead of percentage change
 #
 # Peter Uhe
 # 27/02/2019
@@ -41,18 +43,18 @@ if __name__=='__main__':
 	host=socket.gethostname()
 	if host=='anthropocene.ggy.bris.ac.uk':
 		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_abs-summary.pkl'
 		#models = ['CMIP5-1permodel','CESM-CAM5']
 		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE']
 		models = ['CanESM2']
 		numthreads = 12
-	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
-		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
-		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_jasmin_summary.pkl'
-		numthreads = 8
+	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
+		data_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs.pkl'
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_abs-summary.pkl'
+		numthreads = 16
 		#models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
 		#models = ['CMIP5-subset','CMIP5-regrid','CMIP5-1permodel']
-		models = ['CMIP5-subset','CMIP6-subset','UKCP18-hadgem']
+		models = ['CMIP5','CMIP6','UKCP18-global']
 
 	#######################################
 	# load pickle files
@@ -97,10 +99,10 @@ if __name__=='__main__':
 		for reg in regs:
 			print(reg)
 			# Initialise summary dictionary
-			if not summary.has_key(reg):
+			if not reg in summary:
 				summary[reg]={}
 			# Create summary for this model if doesnt exist already
-			if not summary[reg].has_key(model) or override:
+			if not model in summary[reg] or override:
 				summary[reg][model]={}
 
 				# Flatten data for this model/region into 'seas_data' array
@@ -111,11 +113,11 @@ if __name__=='__main__':
 				# Loop over scenarios and calculate uncertainty ranges		
 				for d,scen in enumerate(scenarios):
 					# calculate bootstrapped error for mean:
-					print 'datahape',seas_data[0].shape,seas_data[1].shape
+					print('datahape',seas_data[0].shape,seas_data[1].shape)
 					if d!=2: # 2deg and 1.5deg vs Hist
-						pct_change = bootstrap_mean_diff(seas_data[d+1],seas_data[0])
+						pct_change = bootstrap_mean_absdiff(seas_data[d+1],seas_data[0])
 					else: # 2deg vs 1.5deg 
-						pct_change = bootstrap_mean_diff(seas_data[d],seas_data[d-1]) 
+						pct_change = bootstrap_mean_absdiff(seas_data[d],seas_data[d-1]) 
 					#print model,scen,'mean',pct_change
 					summary[reg][model][scen]=[pct_change[0],pct_change[1],pct_change[2]]
 				

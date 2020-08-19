@@ -5,8 +5,8 @@ import subprocess,multiprocessing
 
 
 # Process all the data for the particular model, experiment and variable
-def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=8):
-	print model,experiment,var
+def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=2):
+	print(model,experiment,var)
 	if data_freq != 'day':
 		raise Exception('Script can only process daily data, needs work to convert to monthly')
 
@@ -20,18 +20,18 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=8):
 		try:
 
 			fpattern = os.path.join(runpath,var+'_'+data_freq+'_'+model+'*.nc')
-			print fpattern
+			print(fpattern)
 			fin = glob.glob(fpattern)[0]
 			ens = os.path.basename(runpath)
 			ens = ens+'i1p1' # convert e.g. 'r1' to r1i1p1
 			if ens == 'r0i1p1': # skip r0 (forced by ERA-Interim)
 				continue
 			
-			outpath_runs=os.path.join(outpath,'SWL_data',model,experiment,'est1/v1-0/day/atmos',var,ens)
-	                if not os.path.exists(outpath_runs):
-        	                os.makedirs(outpath_runs)
+			outpath_runs=os.path.join(outpath,model,experiment,'est1/v1-0/day/atmos',var,ens)
+			if not os.path.exists(outpath_runs):
+				os.makedirs(outpath_runs)
 			else:
-				print 'path already exists, not creating directory',outpath_runs
+				print('path already exists, not creating directory',outpath_runs)
 
 			# Determine specific warming level years for experiment
 			if experiment == 'historical':
@@ -53,11 +53,11 @@ def process_data(model,experiment,var,basepath,outpath,data_freq,numthreads=8):
 				pool.apply_async(subprocess.call,(cdo_cmd,))
 				#subprocess.call(cdo_cmd)
 			else:
-				print 'file exists',outfile
+				print('file exists',outfile)
 			
-		except Exception,e:
-			print 'Error in script: '
-			print e
+		except Exception as e:
+			print('Error in script: ')
+			print(e)
 
 	pool.close()
 	pool.join()
@@ -68,7 +68,7 @@ if __name__=='__main__':
 	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/MO/HadGEM3/rcp85/day/'
 	basepath = '/gws/nopw/j04/mohc_shared/users/dmhg/helix/MO/HadGEM3/rcp85/day/'
 	#basepath = '/group_workspaces/jasmin2/mohc_shared_OLD/users/dmhg/helix/SMHI/EC-EARTH3-HR/rcp85/day/atmos/'
-	outpath = '/work/scratch/pfu599/helix_data'
+	outpath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data/'
 	experiments = ['historical','slice15','slice20']
 	models = ['HadGEM3']
 

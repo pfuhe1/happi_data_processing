@@ -46,13 +46,13 @@ if __name__=='__main__':
 		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE']
 		models = ['CanESM2']
 		numthreads = 12
-	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
-		data_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs.pkl'
-		summary_pkl = '/home/users/pfu599/pkl/'+index+'_IPCCregs_jasmin_summary.pkl'
-		numthreads = 8
-		#models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
+	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
+		data_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs.pkl'
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_summary.pkl'
+		numthreads = 4
+		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']#,'CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
 		#models = ['CMIP5-subset','CMIP5-regrid','CMIP5-1permodel']
-		models = ['CMIP5-subset','CMIP6-subset','UKCP18-hadgem']
+		#models = ['CMIP5-subset','CMIP6-subset','UKCP18-hadgem']
 
 	#######################################
 	# load pickle files
@@ -71,7 +71,7 @@ if __name__=='__main__':
 
 	#######################################
 	# Get regions
-	regs = data_masked.values()[0].values()[0].keys()
+	regs = list(list(list(data_masked.values())[0].values())[0].keys())
 	print('regions',regs)
 
 	#########################################################################
@@ -85,7 +85,7 @@ if __name__=='__main__':
 			experiments = ['historical','1pt5degC','2pt0degC']
 			scale = 1000.
 		# CMIP5 or Helix models
-		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or model == 'CESM-CAM5-LE': 
+		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or model == 'CESM-CAM5-LE' or host[-12:]=='jasmin.ac.uk': 
 			experiments = ['historical','slice15','slice20']
 			scale = 1.
 		else:
@@ -97,10 +97,10 @@ if __name__=='__main__':
 		for reg in regs:
 			print(reg)
 			# Initialise summary dictionary
-			if not summary.has_key(reg):
+			if not reg in summary:
 				summary[reg]={}
 			# Create summary for this model if doesnt exist already
-			if not summary[reg].has_key(model) or override:
+			if not model in summary[reg] or override:
 				summary[reg][model]={}
 
 				# Flatten data for this model/region into 'seas_data' array
@@ -111,7 +111,7 @@ if __name__=='__main__':
 				# Loop over scenarios and calculate uncertainty ranges		
 				for d,scen in enumerate(scenarios):
 					# calculate bootstrapped error for mean:
-					print 'datahape',seas_data[0].shape,seas_data[1].shape
+					print('datahape',seas_data[0].shape,seas_data[1].shape)
 					if d!=2: # 2deg and 1.5deg vs Hist
 						pct_change = bootstrap_mean_diff(seas_data[d+1],seas_data[0])
 					else: # 2deg vs 1.5deg 
