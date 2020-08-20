@@ -28,7 +28,7 @@ from basins_happi_alldata import get_basindata,create_mask
 if __name__=='__main__':
 
 	#######################################
-	# Variables to set 
+	# Variables to set
 
 	data_freq = 'N/A'
 	override = True
@@ -37,7 +37,7 @@ if __name__=='__main__':
 		index = argv[1].strip()
 	else:
 		index = 'RXx5day'
-	
+
 	#######################################
 	# 	Paths/Variables  dependent on host/machine
 
@@ -65,12 +65,12 @@ if __name__=='__main__':
 		shapefile = '/export/anthropocene/array-01/pu17449/shapefiles/reference_regions_AR6/reference_regions_split.shp'
 		landmask_dir = '/export/anthropocene/array-01/pu17449/happi_data/landmask'
 		basepath = '/export/anthropocene/array-01/pu17449/happi_processed/'
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_AR6reg_data3.pkl'
-		mask_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6reg_masks2.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_AR6reg_summary3.pkl'
-		polygons_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6reg_polygons_closed.pkl'
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5','CMIP5-1permodel','CESM-CAM5-LW','CESM-CAM5-LE']
-		#models = ['CESM-CAM5-LE']
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_data3.pkl'
+		mask_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/AR6reg_masks2.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_summary3.pkl'
+		polygons_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/AR6reg_polygons_closed.pkl'
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE','CanESM2']
+		#models = ['CESM-CAM5-LE',IPCC_AR6regs_calc_indices.py]
 		numthreads = 4
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
 		shapefile = '/home/users/pfu599/data/shapefiles/reference_regions_AR6/reference_regions_split.shp'
@@ -87,7 +87,7 @@ if __name__=='__main__':
 	else:
 		raise Exception('ERROR, Unknown host: '+host)
 
-	
+
 	#######################################
 	# load pickle files
 
@@ -134,7 +134,7 @@ if __name__=='__main__':
 			lat = tmp.variables['lat'][:]
 			lon = tmp.variables['lon'][:]
 			oceanpoints = tmp.variables['sftlf'][:]<50. # Land fractionless than 50%
-			
+
 		# Create 2D arrays of lon and lat
 		nlat = len(lat)
 		nlon = len(lon)
@@ -142,7 +142,7 @@ if __name__=='__main__':
 		# Convert lon range from 0-360 to -180-180
 		lonxx[lonxx>180]=lonxx[lonxx>180]-360
 		points = np.vstack((lonxx.flatten(),latyy.flatten())).T
-		
+
 		##################################################################
 		# Create masks
 		print('Creating masks from polygons')
@@ -200,4 +200,3 @@ if __name__=='__main__':
 		# write out data
 		with open(data_pkl,'wb') as f_pkl:
 			pickle.dump(data_masked,f_pkl,-1)
-

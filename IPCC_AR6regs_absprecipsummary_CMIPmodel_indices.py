@@ -81,7 +81,7 @@ if __name__=='__main__':
 
 	#######################################
 	# Get regions
-	regs = data_masked.values()[0].values()[0].keys()
+	regs = list(list(list(data_masked.values())[0].values())[0].keys())
 	print('regions',regs)
 
 	# quick quality control:

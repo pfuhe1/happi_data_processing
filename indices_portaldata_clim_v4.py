@@ -1,7 +1,7 @@
 # Script to do monthly means then ensemble average of HAPPI data
 # Peter Uhe 2018-07-15
 # Version 4 to only select 10 years (a few runs are longer)
-# 
+#
 import os,glob,tempfile,shutil,socket
 import sys,subprocess
 import multiprocessing
@@ -52,7 +52,7 @@ def create_netcdf_dryspell(template,var,data,outname):
 				outfile.createDimension(dim,leng)
 				outfile.createVariable(dim,'d',(dim,))
 				outfile.variables[dim][:]=template.variables[dim][:]
-				
+
 				#print template.variables[dim].__dict__
 			for att in template.variables[dim].ncattrs():
 				outfile.variables[dim].__setattr__(att,template.variables[dim].__getattribute__(att))
@@ -67,7 +67,7 @@ def create_netcdf_dryspell(template,var,data,outname):
 	outfile.variables[newvar].__setattr__('units','days')
 	# Write data
 	outfile.variables[newvar][:]=data
-	
+
 	if 'lat_bnds' in template.variables:
 		outfile.createDimension('bnds',2)
 		outfile.createVariable('lat_bnds','d',['lat','bnds'])
@@ -84,7 +84,7 @@ def create_netcdf_dryspell(template,var,data,outname):
 	for att in template.ncattrs():
 		outfile.__setattr__(att,getattr(template,att))
 	outfile.__setattr__('history',getattr(outfile,'history') + '\n Dryspell calculated by process_run_dryspell python function in indices_portaldata_clim_v3.py')
-	
+
 
 	#outfile.flush()
 	outfile.close()
@@ -101,7 +101,7 @@ def process_run_dryspell(runpath,whole_run,unit_conv):
 
 	if len(run_files)==0:
 		raise Exception('error, no files found: '+runpath)
-	
+
 	with MFDataset(run_files,'r') as f_netcdf:
 		precip = f_netcdf.variables['pr'][:]*unit_conv # convert to mm/day
 		countdry = np.zeros(precip.shape[1:])
@@ -134,7 +134,7 @@ def process_run_raindays(runpath,run_whole,unit_conv):
 		cdo_cmd = "cdo ymonmean -expr,'raindays=pr>"+thresh+"' " + run_files[0] + " " + run_whole
 		print(cdo_cmd)
 		os.system(cdo_cmd)
-	else: 
+	else:
 		# calculate raindays and concatenate files (have to do in two parts)
 		# CDO command
 		run_cat = run_whole[:-3]+'_cat.nc'
@@ -164,7 +164,7 @@ def process_run_yrmax(runpath,run_whole,unit_conv,timesel):
 		cdo_cmd = ["cdo","yearmax"]+timesel + [run_files[0],run_whole]
 		print(cdo_cmd)
 		return subprocess.call(cdo_cmd)
-	else: 
+	else:
 		# calculate yearmax and concatenate files
 		# CDO command
 		cdo_cmd = ["cdo","-L","yearmax"]+timesel+ ["-cat",' '.join(run_files),run_whole]
@@ -190,7 +190,7 @@ def process_run_yrmean(runpath,run_whole,unit_conv,timesel):
 		cdo_cmd = ["cdo","yearmean"]+timesel + [run_files[0],run_whole]
 		print(cdo_cmd)
 		return subprocess.call(cdo_cmd)
-	else: 
+	else:
 		# calculate yearmax and concatenate files
 		# CDO command
 		cdo_cmd = ["cdo","-L","yearmean"]+timesel+ ["-cat",' '.join(run_files),run_whole]
@@ -216,7 +216,7 @@ def process_run_Rx5day(runpath,run_whole,unit_conv,timesel):
 		cdo_cmd = ["cdo","ymonmax","-runmean,5"] + timesel + [run_files[0],run_whole]
 		print(cdo_cmd)
 		subprocess.call(cdo_cmd)
-	else: 
+	else:
 		# calculate Rx5day (monthly 5 day max) and concatenate files
 		# CDO command
 		cdo_cmd = ["cdo","-L","ymonmax","-runmean,5"]+timesel+["-cat",' '.join(run_files),run_whole]
@@ -243,7 +243,7 @@ def process_run_Tx3day(runpath,run_whole,unit_conv,timesel):
 		cdo_cmd = ["cdo","-L","monmax","-runmean,3"]+timesel+[run_files[0],run_whole]
 		print(cdo_cmd)
 		cdo_ret = subprocess.call(cdo_cmd)
-	else: 
+	else:
 		# calculate Tx3day (monthly max of 3 day mean tmax) and concatenate files
 		# CDO command
 		cdo_cmd = ["cdo","-L","monmax","-runmean,3"]+timesel+['-cat',list_to_string(run_files)[:-1],run_whole]
@@ -272,7 +272,7 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 		cdo_cmd = ["cdo","-L","yearmax","-runmean,5"]+timesel+[run_files[0],run_whole]
 		print(cdo_cmd)
 		return subprocess.call(cdo_cmd)
-	else: 
+	else:
 		# calculate RXx5day (annual 5 day max) and concatenate files
 		# CDO command
 		cdo_cmd = ['cdo','-L','yearmax','-runmean,5']+timesel+['-cat',list_to_string(run_files)[:-1],run_whole]
@@ -288,8 +288,8 @@ def process_run_RXx5day(runpath,run_whole,unit_conv,timesel):
 # Process all the data for the particular model, experiment and variable
 def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq = 'day',domain='atmos',timesel=[]):
 
-	try:		
-	
+	try:
+
 		# set specific 'process' function to call
 		if index == 'raindays':
 			process = process_run_raindays
@@ -320,22 +320,22 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 				index = var+'yrmaxdaily'
 			if data_freq == 'mon':
 				index = var+'yrmaxmonthly'
-		
+
 		outpath_runs=os.path.join(outdir,'indices_data',model,experiment,index)
 		if not os.path.exists(outpath_runs):
 			os.makedirs(outpath_runs)
 
 #		if not os.path.exists(outdir+'/indices_ensmean/'):
 #			os.makedirs(outdir+'/indices_ensmean/')
-			
+
 #		print(model,experiment,var)
 #		outmean = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensmean.nc'
 #		outstd = outdir+'/indices_ensmean/'+model+'.'+index+'.'+experiment+'_monclim_ensstd.nc'
 #		if os.path.exists(outmean) and os.path.exists(outstd):
 #			print('files already exist, skipping')
 #			return
-		
-		# Create pool of processes to process runs in parallel. 
+
+		# Create pool of processes to process runs in parallel.
 		pool = multiprocessing.Pool(processes=numthreads)
 
 
@@ -351,7 +351,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 			if os.path.isdir(runpath):
 				# Add .nc to the end if run is a dir
 				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run+'_yrly.nc')
-			else: 
+			else:
 				# Run contains '.nc' already
 				run_whole = os.path.join(outpath_runs,model+'_'+experiment+'_'+index+'_'+run[:-3]+'_yrly.nc')
 			# Only process if it doesn't exist
@@ -368,7 +368,7 @@ def process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_f
 		pool.close()
 		pool.join()
 
-		# Loop through runs and add to list of successful output files		
+		# Loop through runs and add to list of successful output files
 		for run_whole,result in cmd_ret.items():
 			retcode = result.get(timeout=600.)
 			#retcode = result
@@ -418,7 +418,7 @@ if __name__=='__main__':
 		basepath='/data/scratch/happi_data/'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree']
 		# Number of processes to run in parallel to process ensemble members
-		numthreads = 2	
+		numthreads = 2
 		outdir = '/data/scratch/pu17449/processed_data/'
 	elif host =='anthropocene.ggy.bris.ac.uk':
 		basepath = '/export/anthropocene/array-01/pu17449/happi_data/'
@@ -427,7 +427,7 @@ if __name__=='__main__':
 		#models = ['CanAM4']
 		#basepath = '/export/anthropocene/array-01/pu17449/happi_data_extra/'
 		#models = ['HadRM3P-SAS50']
-		
+
 		# Number of processes to run in parallel to process ensemble members
 		numthreads = 16
 		outdir = '/export/anthropocene/array-01/pu17449/happi_processed'
@@ -440,30 +440,44 @@ if __name__=='__main__':
 		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']
 		experiments = ['historical','slice15','slice20']
 
-		# Override defaults by command line: just run a single model/dataset
-		if len(sys.argv)>1:
-			#if sys.argv[1]=='CMIP6':
-			#	# PROCESS CMIP slices
-			#	models = ['CMIP6']
-			#	experiments = ['historical','slice15','slice20']
-			#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
-			#	outdir = basepath
-			#elif sys.argv[1] == 'CMIP5':
-			#	models = ['CMIP5']
-			#	experiments = ['historical','slice15','slice20']
-			#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
-			#	outdir = basepath
-			#elif sys.argv[1] =='UKCP18':
-			#	# Process UKCP18 slices
-			#	models = ['UKCP18-global']
-			#	experiments = ['historical','slice15','slice20']
-			#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
-			#	outdir = basepath
-			models = [sys.argv[1]]
+	# Override defaults by command line: just run a single model/dataset
+	if len(sys.argv)>1:
+		#if sys.argv[1]=='CMIP6':
+		#	# PROCESS CMIP slices
+		#	models = ['CMIP6']
+		#	experiments = ['historical','slice15','slice20']
+		#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
+		#	outdir = basepath
+		#elif sys.argv[1] == 'CMIP5':
+		#	models = ['CMIP5']
+		#	experiments = ['historical','slice15','slice20']
+		#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
+		#	outdir = basepath
+		#elif sys.argv[1] =='UKCP18':
+		#	# Process UKCP18 slices
+		#	models = ['UKCP18-global']
+		#	experiments = ['historical','slice15','slice20']
+		#	basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data'
+		#	outdir = basepath
+		models = [sys.argv[1]]
+		#experiments = ['historical','slice15','slice20']
+		#basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data/'
+		#outdir = basepath
+
+		# PROCESS CESM low warming
+		# override defaults
+		if sys.argv[1] == 'CESM-CAM5':
+			basepath = '/export/anthropocene/array-01/pu17449/cesm_processed/decade_data_v3/'
+			experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
+			unit_conv = 86400.*1000 # Note, not needed for runoff
+
+
+		# PROCESS CanESM2 large ensemble
+			#override defaults
+		if sys.argv[1] == 'CanESM2':
+			basepath = '/export/anthropocene/array-01/pu17449/canesm2_processed/decade_data_v3/'
 			experiments = ['historical','slice15','slice20']
-			basepath = '/gws/nopw/j04/bris_climdyn/pfu599/timeslice_data/'
-			outdir = basepath
-		
+
 
 
 	#experiments = ['All-Hist','Plus15-Future','Plus20-Future']#,'GHGOnly-Hist']
@@ -471,14 +485,14 @@ if __name__=='__main__':
 
 	#var = 'mrro'
 	#domain = 'land'
-	
+
 	var = 'pr'
 	domain = 'atmos'
 	unit_conv = 86400.
 
 	#indices = ['yrmean']
 	#data_freq = 'mon'
-	
+
 	#indices = ['raindays','Rx5day','RXx5day','dryspell']
 	indices = ['RXx5day','RXx1day','yrmean']
 	data_freq = 'day'
@@ -488,18 +502,7 @@ if __name__=='__main__':
 	#var = 'tasmax'
 	#unit_conv=1.
 
-	# PROCESS CESM low warming
-#	# override defaults
-#	models = ['CESM-CAM5']
-#	basepath = '/export/anthropocene/array-01/pu17449/cesm_processed/decade_data_v3/'
-#	experiments = ['historical','1pt5degC','2pt0degC','slice15','slice20']
-#	unit_conv = 86400.*1000 # Note, not needed for runoff
 
-	# PROCESS CanESM2 large ensemble
-#	# override defaults
-	#models = ['CanESM2']
-	#basepath = '/export/anthropocene/array-01/pu17449/canesm2_processed/decade_data_v3/'
-	#experiments = ['historical','slice15','slice20']
 
 	# PROCESS CMIP5 slices
 #	models = ['CMIP5']
@@ -525,4 +528,3 @@ if __name__=='__main__':
 			for index in indices:
 				# Call process_data for this model, experiment and variable
 				process_data(model,experiment,var,index,basepath,numthreads,unit_conv,data_freq=data_freq,domain=domain,timesel=timesel)
-

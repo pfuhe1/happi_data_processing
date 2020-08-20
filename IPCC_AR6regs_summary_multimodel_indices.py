@@ -3,7 +3,7 @@
 #
 # 1. Loads a pickle file containing region data
 # Input data should be first calculated by running IPCC_regs_calc_index.py script
-# 
+#
 # 2. Computes sampling uncertainty ranges and multi-model summary
 #
 # Peter Uhe
@@ -34,7 +34,7 @@ if __name__=='__main__':
 		index = 'RXx5day'
 	scenarios = ['1.5$^{\circ}$C - Hist','2$^{\circ}$C - Hist','2$^{\circ}$C - 1.5$^{\circ}$C']
 
-	
+
 	#######################################
 	# 	Paths/Variables  dependent on host/machine
 
@@ -59,8 +59,8 @@ if __name__=='__main__':
 		markers = ['s','.','+','x','2','1']
 		numthreads = 12
 	elif host=='anthropocene.ggy.bris.ac.uk':
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_summary3.pkl'
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_data3.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_summary3.pkl'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		summary_name = 'HAPPI'
 		numthreads = 12
@@ -71,7 +71,7 @@ if __name__=='__main__':
 		#models = ['ec-earth3-hr','hadgem3']#,'EC-EARTH3-HR','HadGEM3']
 		models = ['EC-EARTH3-HR','HadGEM3']
 		summary_name = 'HELIX'
-		
+
 	#######################################
 	# load pickle files
 
@@ -125,14 +125,14 @@ if __name__=='__main__':
 			# Flatten data for this model/region into 'seas_data' array
 			for experiment in experiments:
 				seas_data.append((data_masked[model][experiment][reg]*scale).compressed())
-		
+
 			for d,scen in enumerate(scenarios):
 				# calculate bootstrapped error for mean:
 				print('datahape',seas_data[0].shape,seas_data[1].shape)
 				if d!=2: # 2deg and 1.5deg vs Hist
 					pct_change = bootstrap_mean_diff(seas_data[d+1],seas_data[0])
-				else: # 2deg vs 1.5deg 
-					pct_change = bootstrap_mean_diff(seas_data[d],seas_data[d-1]) 
+				else: # 2deg vs 1.5deg
+					pct_change = bootstrap_mean_diff(seas_data[d],seas_data[d-1])
 				pct_ch_arr[reg][z,d]=pct_change[1]
 				pct_ch_up[reg][z,d]=pct_change[2]
 				pct_ch_down[reg][z,d]=pct_change[0]
@@ -164,11 +164,11 @@ if __name__=='__main__':
 		if not summary_name in summary[reg] or override:
 			summary[reg][summary_name]={}
 			for d,scen in enumerate(scenarios):
-				# Use random effect meta analysis 
+				# Use random effect meta analysis
 				model_spr = pct_ch_arr[reg][:,d].std()**2
 				sample_var = ((pct_ch_up[reg][:,d]-pct_ch_down[reg][:,d])/3.2)**2 # Assume normal distribution, 5-95% range is 3.2 times std
 				model_w = 1./(model_spr + sample_var[:])
-		
+
 				best_est = (model_w*pct_ch_arr[reg][:,d]).sum()/model_w.sum()
 				best_err = 1.6*(1/ model_w.sum())**0.5
 
@@ -178,9 +178,8 @@ if __name__=='__main__':
 					print('debug: model best',pct_ch_arr[reg][:,d])
 					print('debug: mode weights',model_w)
 					print('debug: best',best_est,best_err)
-				
-	############################################################################			
+
+	############################################################################
 	# write out data
 	with open(summary_pkl,'wb') as f_pkl:
 		pickle.dump(summary,f_pkl,-1)
-
