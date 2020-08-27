@@ -60,17 +60,20 @@ if __name__=='__main__':
 		numthreads = 12
 	elif host=='anthropocene.ggy.bris.ac.uk':
 		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_data3.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_abs-summary3.pkl'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		summary_name = 'HAPPI'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_abs-summary3.pkl'
+		modelsummary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+summary_name+'models_'+index+'_AR6reg_abs-summary3.pkl'
 		numthreads = 4
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs.pkl'
-		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_abs-summary.pkl'
 		numthreads = 8
 		#models = ['ec-earth3-hr','hadgem3']#,'EC-EARTH3-HR','HadGEM3']
 		models = ['EC-EARTH3-HR','HadGEM3']
 		summary_name = 'HELIX'
+		# Output files
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_abs-summary.pkl'
+		modelsummary_pkl = '/home/users/pfu599/pkl/'+summary_name+'models_'+index+'_AR6regs_jasmin_abs-summary.pkl'
 
 	#######################################
 	# load pickle files
@@ -80,6 +83,8 @@ if __name__=='__main__':
 			summary = pickle.load(f_pkl)
 	else:
 		summary = {}
+
+	modelsummary = {}
 
 	if os.path.exists(data_pkl):
 		with open(data_pkl,'rb') as f_pkl:
@@ -138,6 +143,13 @@ if __name__=='__main__':
 				pct_ch_down[reg][z,d]=pct_change[0]
 				#print model,scen,'mean',pct_change
 
+				# Initialise modelsummary dictionary then set values
+				if not reg in modelsummary:
+					modelsummary[reg]={}
+				if not model in modelsummary[reg]:
+					modelsummary[reg][model]={}
+				modelsummary[reg][model][scen] = [pct_change[0],pct_change[1],pct_change[2]]
+
 	############################################################################
 	# Now create meta analysis / multi model summary:
 
@@ -183,3 +195,7 @@ if __name__=='__main__':
 	# write out data
 	with open(summary_pkl,'wb') as f_pkl:
 		pickle.dump(summary,f_pkl,-1)
+
+	# write out data
+	with open(modelsummary_pkl,'wb') as f_pkl:
+		pickle.dump(modelsummary,f_pkl,-1)
