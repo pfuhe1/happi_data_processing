@@ -88,6 +88,8 @@ if __name__=='__main__':
 	for model in list(data_masked.keys()):
 		modeldata=data_masked[model]
 		if len(modeldata)<3:
+			print(modeldata.keys())
+			print('model missing data: '+model+', skipping')
 			del(data_masked[model])
 
 	# Get models
@@ -113,7 +115,7 @@ if __name__=='__main__':
 		if model =='CESM-CAM5':
 			experiments = ['historical','1pt5degC','2pt0degC']
 			scale = 1000.
-		elif model == 'CMIP5' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk':
+		elif model == 'CMIP5' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
 			experiments = ['historical','slice15','slice20']
 			scale = 1.
 		else:
@@ -132,19 +134,19 @@ if __name__=='__main__':
 				# calculate bootstrapped error for mean:
 				print('datahape',seas_data[0].shape,seas_data[1].shape)
 				if d!=2: # 2deg and 1.5deg vs Hist
-					pct_change = bootstrap_mean_absdiff(seas_data[d+1],seas_data[0])
+					change = bootstrap_mean_absdiff(seas_data[d+1],seas_data[0])
 				else: # 2deg vs 1.5deg 
-					pct_change = bootstrap_mean_absdiff(seas_data[d],seas_data[d-1]) 
-				pct_ch_arr[reg][z,d]=pct_change[1]
-				pct_ch_up[reg][z,d]=pct_change[2]
-				pct_ch_down[reg][z,d]=pct_change[0]
-				#print model,scen,'mean',pct_change
+					change = bootstrap_mean_absdiff(seas_data[d],seas_data[d-1])
+				pct_ch_arr[reg][z,d]=change[1]
+				pct_ch_up[reg][z,d]=change[2]
+				pct_ch_down[reg][z,d]=change[0]
+				#print model,scen,'mean',change
 				# Initialise cmip_summary dictionary then set values
 				if not reg in cmip_summary:
 					cmip_summary[reg]={}
 				if not model in cmip_summary[reg]:
 					cmip_summary[reg][model]={}
-				cmip_summary[reg][model][scen] = [pct_change[0],pct_change[1],pct_change[2]]
+				cmip_summary[reg][model][scen] = [change[0],change[1],change[2]]
 
 	############################################################################
 	# Now create meta analysis / multi model summary:

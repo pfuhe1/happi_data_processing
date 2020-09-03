@@ -5,6 +5,8 @@
 # Input data should be first calculated by running IPCC_regs_calc_indices.py script
 #
 # 2. Computes sampling uncertainty ranges for each model/region and saves to a new pkl file
+# 
+# absprecip version calculates changes in mm/day instead of percentage change
 #
 # Peter Uhe
 # 27/02/2019
@@ -40,19 +42,18 @@ if __name__=='__main__':
 
 	host=socket.gethostname()
 	if host=='anthropocene.ggy.bris.ac.uk':
-		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_data3.pkl'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_summary3.pkl'
+		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_std-summary.pkl'
 		#models = ['CMIP5-1permodel','CESM-CAM5']
-		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree',
-		models = ['CanAM4','CanESM2',]#'CESM-CAM5-LW','CESM-CAM5-LE']
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE','CanESM2']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs.pkl'
-		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_summary.pkl'
-		numthreads = 4
-		models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3']#,'CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_std-summary.pkl'
+		numthreads = 16
+		#models = ['ec-earth3-hr','hadgem3','EC-EARTH3-HR','HadGEM3','CMIP6-regrid','CMIP6-1permodel','CMIP6-subset','UKCP18-global']
 		#models = ['CMIP5-subset','CMIP5-regrid','CMIP5-1permodel']
-		#models = ['CMIP5-subset','CMIP6-subset','UKCP18-hadgem']
+		models = ['CMIP5','CMIP6','UKCP18-global']
 
 	#######################################
 	# load pickle files
@@ -85,7 +86,7 @@ if __name__=='__main__':
 			experiments = ['historical','1pt5degC','2pt0degC']
 			scale = 1000.
 		# CMIP5 or Helix models
-		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or model == 'CESM-CAM5-LE' or host[-12:]=='jasmin.ac.uk': 
+		elif model[:4] == 'CMIP' or model == 'CanESM2' or host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or model == 'CESM-CAM5-LE': 
 			experiments = ['historical','slice15','slice20']
 			scale = 1.
 		else:
@@ -113,11 +114,12 @@ if __name__=='__main__':
 					# calculate bootstrapped error for mean:
 					print('datahape',seas_data[0].shape,seas_data[1].shape)
 					if d!=2: # 2deg and 1.5deg vs Hist
-						pct_change = bootstrap_mean_diff(seas_data[d+1],seas_data[0])
+						change = bootstrap_mean_absdiff(seas_data[d+1],seas_data[0])
 					else: # 2deg vs 1.5deg 
-						pct_change = bootstrap_mean_diff(seas_data[d],seas_data[d-1]) 
-					#print model,scen,'mean',pct_change
-					summary[reg][model][scen]=[pct_change[0],pct_change[1],pct_change[2]]
+						change = bootstrap_mean_absdiff(seas_data[d],seas_data[d-1])
+					change = change/seas_data[0].std() # normalise by std of historical data
+					#print model,scen,'mean',change
+					summary[reg][model][scen]=[change[0],change[1],change[2]]
 				
 	#########################################################################				
 	# write out data

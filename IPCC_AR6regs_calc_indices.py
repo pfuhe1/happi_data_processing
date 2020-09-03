@@ -58,7 +58,7 @@ if __name__=='__main__':
 		basepath = '/data/scratch/pu17449/happi_processed/'
 		basin_path='/home/pu17449/happi_analysis/river_basins/basin_files/'
 		pkl_dir = '/data/scratch/pu17449/pkl_data/'
-		models = ['CESM-CAM5','NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
+		models = ['CanESM2',]#'CESM-CAM5','NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		markers = ['s','.','+','x','2','1']
 		numthreads = 12
 	elif host=='anthropocene.ggy.bris.ac.uk':
@@ -69,7 +69,7 @@ if __name__=='__main__':
 		mask_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/AR6reg_masks2.pkl'
 		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_summary3.pkl'
 		polygons_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/AR6reg_polygons_closed.pkl'
-		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE','CanESM2']
+		models = ['CanESM2']#'NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE','CanESM2']
 		#models = ['CESM-CAM5-LE',IPCC_AR6regs_calc_indices.py]
 		numthreads = 4
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':

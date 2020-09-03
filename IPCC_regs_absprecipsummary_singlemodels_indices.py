@@ -45,8 +45,7 @@ if __name__=='__main__':
 		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_data3.pkl'
 		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/'+index+'_IPCCreg_abs-summary.pkl'
 		#models = ['CMIP5-1permodel','CESM-CAM5']
-		#models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE']
-		models = ['CanESM2']
+		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree','CESM-CAM5-LW','CESM-CAM5-LE','CanESM2']
 		numthreads = 12
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs.pkl'
@@ -115,11 +114,11 @@ if __name__=='__main__':
 					# calculate bootstrapped error for mean:
 					print('datahape',seas_data[0].shape,seas_data[1].shape)
 					if d!=2: # 2deg and 1.5deg vs Hist
-						pct_change = bootstrap_mean_absdiff(seas_data[d+1],seas_data[0])
+						change = bootstrap_mean_absdiff(seas_data[d+1],seas_data[0])
 					else: # 2deg vs 1.5deg 
-						pct_change = bootstrap_mean_absdiff(seas_data[d],seas_data[d-1]) 
-					#print model,scen,'mean',pct_change
-					summary[reg][model][scen]=[pct_change[0],pct_change[1],pct_change[2]]
+						change = bootstrap_mean_absdiff(seas_data[d],seas_data[d-1])
+					#print model,scen,'mean',change
+					summary[reg][model][scen]=[change[0],change[1],change[2]]
 				
 	#########################################################################				
 	# write out data

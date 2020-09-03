@@ -39,31 +39,12 @@ if __name__=='__main__':
 	# 	Paths/Variables  dependent on host/machine
 
 	host=socket.gethostname()
-	if host=='triassic.ggy.bris.ac.uk':
-		basepath='/export/triassic/array-01/pu17449/happi_data_decade/'
-		pkl_dir = '/export/silurian/array-01/pu17449/pkl_data/'
-		models = ['CAM5-1-2-025degree']
-		numthreads = 5
-	elif host =='silurian.ggy.bris.ac.uk':
-		basepath = '/export/silurian/array-01/pu17449/happi_data/'
-		basin_path='/home/bridge/pu17449/src/happi_analysis/river_basins/basin_files/'
-		pkl_dir = '/export/silurian/array-01/pu17449/pkl_data/'
-		models = ['CESM-CAM5','NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
-		markers = ['s','.','+','x','2','1']
-		numthreads = 4
-	elif host=='happi.ggy.bris.ac.uk':
-		basepath = '/data/scratch/pu17449/happi_processed/'
-		basin_path='/home/pu17449/happi_analysis/river_basins/basin_files/'
-		pkl_dir = '/data/scratch/pu17449/pkl_data/'
-		models = ['CESM-CAM5','NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P']
-		markers = ['s','.','+','x','2','1']
-		numthreads = 12
-	elif host=='anthropocene.ggy.bris.ac.uk':
+	if host=='anthropocene.ggy.bris.ac.uk':
 		data_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_data3.pkl'
 		models = ['NorESM1-HAPPI','MIROC5','CanAM4','CAM4-2degree','HadAM3P','ECHAM6-3-LR','CAM5-1-2-025degree']
 		summary_name = 'HAPPI'
-		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_abs-summary3.pkl'
-		modelsummary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+summary_name+'models_'+index+'_AR6reg_abs-summary3.pkl'
+		summary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+index+'_AR6reg_std-summary3.pkl'
+		modelsummary_pkl = '/export/anthropocene/array-01/pu17449/pkl/AR6regs/'+summary_name+'models_'+index+'_AR6reg_std-summary3.pkl'
 		numthreads = 4
 	elif host[:6] == 'jasmin' or host[-11:] == 'jc.rl.ac.uk' or host[-12:]=='jasmin.ac.uk':
 		data_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs.pkl'
@@ -72,8 +53,8 @@ if __name__=='__main__':
 		models = ['EC-EARTH3-HR','HadGEM3']
 		summary_name = 'HELIX'
 		# Output files
-		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_abs-summary.pkl'
-		modelsummary_pkl = '/home/users/pfu599/pkl/'+summary_name+'models_'+index+'_AR6regs_jasmin_abs-summary.pkl'
+		summary_pkl = '/home/users/pfu599/pkl/'+index+'_AR6regs_jasmin_std-summary.pkl'
+		modelsummary_pkl = '/home/users/pfu599/pkl/'+summary_name+'models_'+index+'_AR6regs_jasmin_std-summary.pkl'
 
 	#######################################
 	# load pickle files
@@ -138,6 +119,7 @@ if __name__=='__main__':
 					change = bootstrap_mean_absdiff(seas_data[d+1],seas_data[0])
 				else: # 2deg vs 1.5deg
 					change = bootstrap_mean_absdiff(seas_data[d],seas_data[d-1])
+				change = change/seas_data[0].std() # Normalise by std of historical simulations
 				pct_ch_arr[reg][z,d]=change[1]
 				pct_ch_up[reg][z,d]=change[2]
 				pct_ch_down[reg][z,d]=change[0]

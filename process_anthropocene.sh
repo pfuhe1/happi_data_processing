@@ -12,10 +12,11 @@
 for index in RXx5day RXx1day pryrmean
 do
   # Calculate region averages for AR6 regions (script loops over models)
-  python IPCC_AR6regs_calc_indices.py $index
+#  python IPCC_AR6regs_calc_indices.py $index
 
   # Calculate summary statistics from vales of indices for IPCC AR6 regions
-  python IPCC_AR6regs_summary_multimodel_indices.py $index #(default is HAPPI models only)
-  python IPCC_AR6regs_absprecipsummary_multimodel_indices.py $index #(default is HAPPI models only)
+  #python IPCC_AR6regs_summary_multimodel_indices.py $index #(default is HAPPI models only)
+  #python IPCC_AR6regs_absprecipsummary_multimodel_indices.py $index #(default is HAPPI models only)
 
+  python IPCC_AR6regs_summary_singlemodels_indices.py $index # to process canam4,canesm2,cesm-cam5
 done
